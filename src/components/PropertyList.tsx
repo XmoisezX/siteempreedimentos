@@ -1,4 +1,5 @@
-import React from 'react';
+
+
 import type { Property } from '../data/mockData';
 import { MapPin, Bed, Bath, Move, Building2 } from 'lucide-react';
 

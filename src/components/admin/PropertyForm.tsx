@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { X, Upload, CheckCircle2, Loader2, FileUp, Plus, MapPin, Search } from 'lucide-react';
+import type { Property } from '../../data/mockData';
+import { X, Upload, CheckCircle2, Loader2, FileUp, Plus, Search } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -16,7 +17,7 @@ L.Icon.Default.mergeOptions({
 interface PropertyFormProps {
   onClose: () => void;
   onSuccess: () => void;
-  editingProperty?: any;
+  editingProperty?: Property;
 }
 
 // Subcomponent to update map center when coordinates change

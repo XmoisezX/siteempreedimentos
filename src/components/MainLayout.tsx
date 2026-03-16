@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PropertyList from './PropertyList';
 import PropertyMap from './PropertyMap';
 import SimulationForm from './SimulationForm';
@@ -9,7 +9,7 @@ import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximiz
 
 export default function MainLayout() {
   const [activeTab, setActiveTab] = useState<'apartments' | 'houses'>('apartments');
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -138,7 +138,7 @@ export default function MainLayout() {
                 <img src={selectedProperty.image_url} alt={selectedProperty.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <button 
-                  onClick={() => setSelectedProperty(null)}
+                  onClick={() => setSelectedProperty(undefined)}
                   className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white p-2 rounded-full hover:bg-white/40 transition-colors md:hidden"
                 >
                   <CloseIcon className="w-5 h-5" />
@@ -148,7 +148,7 @@ export default function MainLayout() {
               {/* Informações e Formulário */}
               <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-y-auto h-full scrollbar-hide">
                 <button 
-                  onClick={() => setSelectedProperty(null)}
+                  onClick={() => setSelectedProperty(undefined)}
                   className="absolute top-4 right-4 text-slate-300 hover:text-slate-900 transition-colors hidden md:block"
                 >
                   <CloseIcon className="w-6 h-6" />

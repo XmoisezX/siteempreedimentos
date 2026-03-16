@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Loader2, Sparkles, MessageCircle, Users, Baby, Building2, Download, FileText } from 'lucide-react';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';

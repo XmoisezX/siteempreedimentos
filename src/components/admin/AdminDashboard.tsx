@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import type { Property } from '../../data/mockData';
 import PropertyForm from './PropertyForm';
@@ -11,7 +11,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [editingProperty, setEditingProperty] = useState<Property | undefined>(undefined);
 
   useEffect(() => {
     // Check initial auth state
@@ -94,7 +94,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         
         <div className="flex items-center space-x-3">
           <button 
-            onClick={() => { setEditingProperty(null); setShowForm(true); }}
+            onClick={() => { setEditingProperty(undefined); setShowForm(true); }}
             className="flex items-center space-x-2 bg-imperio-blue-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95"
           >
             <Plus className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {properties.map((prop: any) => (
+              {properties.map((prop: Property) => (
                 <div key={prop.id} className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
                   <div className="h-44 bg-slate-200 relative overflow-hidden">
                     <img src={prop.image_url} alt={prop.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -210,8 +210,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       {/* Form Modal */}
       {showForm && (
         <PropertyForm 
-          onClose={() => { setShowForm(false); setEditingProperty(null); }} 
-          onSuccess={() => { setShowForm(false); setEditingProperty(null); fetchProperties(); }}
+          onClose={() => { setShowForm(false); setEditingProperty(undefined); }} 
+          onSuccess={() => { setShowForm(false); setEditingProperty(undefined); fetchProperties(); }}
           editingProperty={editingProperty}
         />
       )}
