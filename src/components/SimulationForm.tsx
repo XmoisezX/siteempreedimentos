@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Loader2, Sparkles, MessageCircle, Baby, Building2, Download } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Sparkles, MessageCircle, Baby, Building2, Download } from 'lucide-react';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
 
