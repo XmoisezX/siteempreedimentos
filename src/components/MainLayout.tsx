@@ -3,6 +3,7 @@ import PropertyList from './PropertyList';
 import PropertyMap from './PropertyMap';
 import SimulationForm from './SimulationForm';
 import AdminDashboard from './admin/AdminDashboard';
+import WhatsAppButton from './WhatsAppButton';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
 import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft } from 'lucide-react';
@@ -296,6 +297,8 @@ export default function MainLayout() {
           </div>
         )}
       </main>
+      {/* Botão Flutuante WhatsApp */}
+      <WhatsAppButton />
     </div>
   );
 }
