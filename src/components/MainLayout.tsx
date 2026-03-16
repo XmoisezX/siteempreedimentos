@@ -44,14 +44,12 @@ export default function MainLayout() {
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans">
       {/* Header Premium */}
       <header className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 z-20 shadow-sm">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-imperio-blue-900 rounded-xl flex items-center justify-center shadow-lg shadow-black/10">
-            <span className="text-white font-black text-xl italic">IP</span>
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-black text-slate-900 leading-none tracking-tighter uppercase italic">Imperial Paris</h1>
-            <span className="text-[10px] font-bold text-imperio-gold-500 uppercase tracking-[0.2em] mt-1">Imóveis & Empreendimentos</span>
-          </div>
+        <div className="flex items-center">
+          <img 
+            src="/LOGO LARANJA.png" 
+            alt="Imperial Paris" 
+            className="h-12 w-auto object-contain"
+          />
         </div>
         
         <div className="flex items-center space-x-4">

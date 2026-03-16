@@ -82,8 +82,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
-             <h1 className="text-xl font-bold text-slate-900">Admin</h1>
-             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase tracking-wider">Imperial Paris</span>
+             <img 
+               src="/LOGO LARANJA.png" 
+               alt="Logo" 
+               className="h-8 w-auto object-contain"
+             />
+             <h1 className="text-xl font-bold text-slate-900 border-l border-slate-200 pl-3">Admin</h1>
           </div>
           
           <div className="hidden md:flex items-center space-x-2 text-slate-400 text-xs font-medium border-l border-slate-100 pl-6">
