@@ -59,6 +59,13 @@ export default function PropertyList({ category, properties, onHover, onSelect }
                  <span className="flex items-center"><Bath className="w-3.5 h-3.5 mr-1"/> {property.bathrooms}</span>
                  <span className="flex items-center"><Move className="w-3.5 h-3.5 mr-1"/> {property.area}m²</span>
                </div>
+               
+               <div className="flex flex-col items-end">
+                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">A partir de</span>
+                 <span className="text-sm font-black text-imperio-blue-900 leading-none">
+                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(property.valor_imovel_construtora || property.price)}
+                 </span>
+               </div>
              </div>
           </div>
         </div>

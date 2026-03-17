@@ -32,6 +32,9 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     faixa: string;
     propertyValue: number;
     subsidyApplied: boolean;
+    federalSubsidyActive: boolean;
+    federalSubsidyProjected: number;
+    federalSubsidyDisplayRange: string;
     entryInstallments?: number;
     debugLog?: string;
   }>(null);
@@ -111,12 +114,45 @@ export default function SimulationForm({ property: initialProperty, onSimulation
         faixa = "Financiamento Tradicional";
       }
 
-      // TAXA DE JUROS (8.47% a.a.)
-      const iAnnual = 0.0847;
+      // TAXA DE JUROS EFETIVOS A.A
+      let iAnnual = 0.0847; // Default Faixa 3
+      if (faixa === "Faixa 1") iAnnual = 0.0485;
+      else if (faixa === "Faixa 2") iAnnual = 0.0564;
+      else if (faixa === "Faixa 3") iAnnual = 0.0847;
+      else if (faixa === "Faixa 4") iAnnual = 0.1047;
+      else iAnnual = 0.1149; // SBPE Tradicional
+      
       const iMonthly = iAnnual / 12;
 
-      // FINANCIAMENTO MÁXIMO (80%)
-      let financedAmount = evaluationValue * 0.80;
+      // SUBSIDIO FEDERAL MCMV
+      let projFederalSubsidy = 0;
+      let displayFederalSubsidyRange = "";
+      
+      if (program === "Minha Casa Minha Vida") {
+        if (income >= 1800 && income <= 2000) {
+          if (formData.dependents === 0) {
+            projFederalSubsidy = 20000;
+            displayFederalSubsidyRange = "R$ 15.000 a R$ 25.000";
+          } else {
+            projFederalSubsidy = 50000;
+            displayFederalSubsidyRange = "R$ 45.000 a R$ 55.000";
+          }
+        } else if (income >= 2001 && income <= 2500) {
+          if (formData.dependents === 0) {
+            projFederalSubsidy = 7500;
+            displayFederalSubsidyRange = "R$ 5.000 a R$ 10.000";
+          } else {
+            projFederalSubsidy = 22500;
+            displayFederalSubsidyRange = "R$ 20.000 a R$ 25.000";
+          }
+        }
+      }
+
+      // NOVO VALOR BASE DE AVALIAÇÃO (Descontado o Subsídio Federal)
+      const subsidizedEvaluation = evaluationValue - projFederalSubsidy;
+
+      // FINANCIAMENTO MÁXIMO (80% da avaliação já subsidiada)
+      let financedAmount = subsidizedEvaluation * 0.80;
       const maxInstallment = income * 0.30;
 
       // Cálculo PMT (Sistema PRICE)
@@ -134,7 +170,8 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       }
 
       const propertyValue = selectedProperty.valor_imovel_construtora || evaluationValue;
-      const calculatedEntry = propertyValue - financedAmount;
+      // Entrada é o Valor do Imóvel (Construtora) - Subsídio Federal - O que for financiado.
+      const calculatedEntry = (propertyValue - projFederalSubsidy) - financedAmount;
       const minSalary = 1518;
       const incomeLimit = minSalary * 5;
       const propertyLimit = 320000;
@@ -160,19 +197,21 @@ PERFIL DO CLIENTE:
 PARÂMETROS DE FINANCIAMENTO:
 - Prazo Máximo Real: ${term} meses (Regra: min(420, (80 - ${age}) * 12))
 - Comprometimento de Renda Máximo (30%): ${formatCurrency(maxInstallment)}
-- Taxa de Juros (8.47% a.a.): ${(iMonthly * 100).toFixed(4)}% a.m.
+- Taxa de Juros (${(iAnnual * 100).toFixed(2)}% a.a.): ${(iMonthly * 100).toFixed(4)}% a.m.
 
 CÁLCULO DO PLANO:
 1. Valor do Imóvel (Base Construtora): ${formatCurrency(propertyValue)}
-2. Financiamento Máximo (80% da Av. Caixa): ${formatCurrency(evaluationValue * 0.8)}
-3. Financiamento Final: ${formatCurrency(financedAmount)} (Ajustado p/ renda)
-4. Parcela Mensal (Sistema PRICE): ${formatCurrency(currentParcel)}
-5. Diferença (Imóvel - Financiado): ${formatCurrency(calculatedEntry)}
+2. Subsídio Federal (MCMV): ${projFederalSubsidy > 0 ? formatCurrency(projFederalSubsidy) + ' (Projetado: ' + displayFederalSubsidyRange + ')' : 'R$ 0,00'}
+2. Avaliação Liquida (Caixa - Subsídio): ${formatCurrency(subsidizedEvaluation)}
+3. Financiamento Máximo Perm. (80% da Av. Líquida): ${formatCurrency(subsidizedEvaluation * 0.8)}
+4. Financiamento Final Aprovado: ${formatCurrency(financedAmount)} (Ajustado p/ renda)
+5. Parcela Mensal (Sistema PRICE): ${formatCurrency(currentParcel)}
+6. Diferença Pré-Porta de Entrada: ${formatCurrency(calculatedEntry)}
 
-SUBSÍDIO PORTA DE ENTRADA:
+SUBSÍDIO GOVERNO DO ESTADO (PORTA DE ENTRADA):
 - Participa do Programa: ${isPortaDeEntrada ? 'SIM' : 'NÃO'}
 - Atende Critérios (Renda <= 5SM e Imovel <= 320k): ${meetsSubsidyConditions ? 'SIM' : 'NÃO'}
-- Valor do Subsídio: ${formatCurrency(subsidy)}
+- Valor do Subsídio Estadual: ${formatCurrency(subsidy)}
 
 RESULTADO FINAL:
 - Entrada antes do Subsídio: ${formatCurrency(calculatedEntry)}
@@ -193,6 +232,9 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         faixa: faixa,
         propertyValue: selectedProperty.valor_imovel_construtora || evaluationValue,
         subsidyApplied: meetsSubsidyConditions,
+        federalSubsidyActive: projFederalSubsidy > 0,
+        federalSubsidyProjected: projFederalSubsidy,
+        federalSubsidyDisplayRange: displayFederalSubsidyRange,
         entryInstallments: selectedProperty.parcelas_entrada,
         debugLog: debugLog
       });
@@ -522,9 +564,18 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Valor do Imóvel</span>
                 <span className="text-sm font-black text-slate-800 italic">{formatCurrency(result.propertyValue)}</span>
              </div>
+             {result.federalSubsidyActive && (
+               <div className="flex flex-col mt-2 mb-2">
+                 <div className="flex justify-between items-center text-blue-600">
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Subsídio Gov. Federal (Proj.)</span>
+                    <span className="text-sm font-black italic">- {formatCurrency(result.federalSubsidyProjected)}</span>
+                 </div>
+                 <span className="text-[8px] text-blue-400 font-bold uppercase mt-0.5">*Valor projetado entre {result.federalSubsidyDisplayRange} (use o demonstrativo para ver detalhes)</span>
+               </div>
+             )}
              {result.subsidyApplied && (
-               <div className="flex justify-between items-center mb-1 text-emerald-600">
-                  <span className="text-[9px] font-bold uppercase tracking-widest">Porta de Entrada (Subsídio)</span>
+               <div className="flex justify-between items-center mt-2 mb-1 text-emerald-600">
+                  <span className="text-[9px] font-bold uppercase tracking-widest">Porta de Entrada (Subsídio Estadual)</span>
                   <span className="text-sm font-black italic">- {formatCurrency(20000)}</span>
                </div>
              )}

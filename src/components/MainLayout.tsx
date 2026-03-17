@@ -68,13 +68,21 @@ export default function MainLayout() {
     }
     others = others.slice(0, 3);
 
-    const { income, birthDate } = simulationData;
+    const { income, birthDate, dependents = 0 } = simulationData;
     if (!income || !birthDate) return [];
 
     const age = calculateAge(birthDate);
     const maxTermByAge = (80 - age) * 12;
     const term = Math.min(420, maxTermByAge);
-    const iAnnual = 0.0847;
+    
+    // TAXA DE JUROS EFETIVOS A.A
+    let iAnnual = 0.0847; // Default Faixa 3
+    if (income <= 2850) iAnnual = 0.0485;
+    else if (income <= 4700) iAnnual = 0.0564;
+    else if (income <= 8600) iAnnual = 0.0847;
+    else if (income <= 12000) iAnnual = 0.1047;
+    else iAnnual = 0.1149; // SBPE Tradicional
+    
     const iMonthly = iAnnual / 12;
     const maxInstallment = income * 0.30;
     const minSalary = 1518;
@@ -87,7 +95,18 @@ export default function MainLayout() {
 
     return others.map(prop => {
       const evaluationValue = prop.valor_avaliacao_caixa || 200000;
-      let financedAmount = evaluationValue * 0.80;
+      
+      let projFederalSubsidy = 0;
+      if (income <= 12000) { // MCMV
+        if (income >= 1800 && income <= 2000) {
+          projFederalSubsidy = dependents === 0 ? 20000 : 50000;
+        } else if (income >= 2001 && income <= 2500) {
+          projFederalSubsidy = dependents === 0 ? 7500 : 22500;
+        }
+      }
+
+      const subsidizedEvaluation = evaluationValue - projFederalSubsidy;
+      let financedAmount = subsidizedEvaluation * 0.80;
       let currentParcel = calculatePMT(financedAmount, iMonthly, term);
 
       while (currentParcel > maxInstallment && financedAmount > 0) {
@@ -96,7 +115,7 @@ export default function MainLayout() {
       }
 
       const propertyValue = prop.valor_imovel_construtora || evaluationValue;
-      const calculatedEntry = propertyValue - financedAmount;
+      const calculatedEntry = (propertyValue - projFederalSubsidy) - financedAmount;
       const meetsSubsidyConditions = income <= incomeLimit && evaluationValue <= propertyLimit;
       const isPortaDeEntrada = prop.porta_de_entrada !== false;
       const subsidy = (meetsSubsidyConditions && isPortaDeEntrada) ? 20000 : 0;
