@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Sparkles, MessageCircle, Baby, Building2, Download } from 'lucide-react';
-import type { Property } from '../data/mockData';
+import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Sparkles, Building2, Phone, UserCircle2, Baby, Download, MessageCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 interface SimulationFormProps {
@@ -15,6 +13,8 @@ export default function SimulationForm({ property: initialProperty, onSimulation
   const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(initialProperty);
   
   const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
     income: 5000,
     birthDate: '',
     hasSecondBuyer: false,
@@ -80,7 +80,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     URL.revokeObjectURL(url);
   };
 
-  const handleSimulate = (e: React.FormEvent) => {
+  const handleSimulate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProperty) return;
     
@@ -195,6 +195,19 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         debugLog: debugLog
       });
 
+      // Salvar simulação e Lead no banco de dados
+      supabase.from('simulations').insert([{
+        property_id: selectedProperty.id,
+        name: formData.name,
+        phone: formData.phone,
+        income: income,
+        birth_date: formData.birthDate,
+        dependents: formData.dependents,
+        has_second_buyer: formData.hasSecondBuyer
+      }]).then(({ error }) => {
+        if (error) console.error("Erro ao salvar simulação:", error);
+      });
+
       if (onSimulationComplete) {
         onSimulationComplete(formData);
       }
@@ -237,13 +250,51 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
           
           {/* Progress Bar */}
           <div className="flex space-x-2 mb-8 px-2">
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3, 4].map(i => (
               <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step >= i ? 'bg-imperio-blue-900' : 'bg-slate-100'}`} />
             ))}
           </div>
 
           <div className="flex-1">
             {step === 1 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex items-center space-x-2 text-imperio-blue-900 mb-2">
+                  <UserCircle2 className="w-5 h-5" />
+                  <span className="text-xs font-black uppercase tracking-widest">Seus Dados</span>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block tracking-widest">Nome Completo</label>
+                    <input 
+                      type="text" 
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ex: João da Silva"
+                      className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-imperio-blue-900/10 transition-all"
+                      required
+                    />
+                  </div>
+
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block tracking-widest">WhatsApp</label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                      <input 
+                        type="tel" 
+                        value={formData.phone}
+                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="(00) 00000-0000"
+                        className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-imperio-blue-900/10 transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex items-center space-x-2 text-imperio-blue-900 mb-2">
                   <Building2 className="w-5 h-5" />
@@ -294,7 +345,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
               </div>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex items-center space-x-2 text-imperio-blue-900 mb-2">
                   <User className="w-5 h-5" />
@@ -349,7 +400,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
               </div>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex items-center justify-center py-10">
                    <div className="text-center space-y-4">
@@ -378,11 +429,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
               </button>
             )}
             
-            {step < 3 ? (
+            {step < 4 ? (
               <button 
                 type="button"
                 onClick={handleNext}
-                disabled={(step === 1 && !selectedProperty) || (step === 2 && !formData.birthDate)}
+                disabled={(step === 1 && (!formData.name || !formData.phone)) || (step === 2 && !selectedProperty) || (step === 3 && !formData.birthDate)}
                 className="flex-1 bg-imperio-blue-900 text-white font-black uppercase text-xs tracking-widest py-4 rounded-2xl shadow-xl shadow-imperio-blue-900/20 flex items-center justify-center space-x-2 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <span>Próximo Passo</span>
