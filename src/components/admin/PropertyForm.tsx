@@ -5,6 +5,25 @@ import { X, Upload, CheckCircle2, Loader2, FileUp, Plus, Search } from 'lucide-r
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import imageCompression from 'browser-image-compression';
+
+const formatCurrency = (value: string | number) => {
+  if (value === '' || value === null || value === undefined) return '';
+  const numericValue = String(value).replace(/\D/g, '');
+  if (!numericValue) return '';
+  const number = Number(numericValue) / 100;
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2
+  }).format(number);
+};
+
+const parseCurrency = (value: string | number) => {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  return Number(value.replace(/\D/g, '')) / 100;
+};
 
 // Fix for default Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -54,7 +73,7 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
     neighborhood: editingProperty?.neighborhood || '',
     address: editingProperty?.address || '',
     zip_code: editingProperty?.zip_code || '',
-    price: editingProperty?.price || '',
+    price: editingProperty?.price ? formatCurrency(editingProperty.price.toFixed(2).replace('.', '')) : '',
     lat: editingProperty?.lat || -31.7654,
     lng: editingProperty?.lng || -52.3376,
     description: editingProperty?.description || '',
@@ -62,8 +81,8 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
     bathrooms: editingProperty?.bathrooms || '',
     area: editingProperty?.area || '',
     company: editingProperty?.company || '',
-    valor_avaliacao_caixa: editingProperty?.valor_avaliacao_caixa || '',
-    valor_imovel_construtora: editingProperty?.valor_imovel_construtora || '',
+    valor_avaliacao_caixa: editingProperty?.valor_avaliacao_caixa ? formatCurrency(editingProperty.valor_avaliacao_caixa.toFixed(2).replace('.', '')) : '',
+    valor_imovel_construtora: editingProperty?.valor_imovel_construtora ? formatCurrency(editingProperty.valor_imovel_construtora.toFixed(2).replace('.', '')) : '',
     parcelas_entrada: editingProperty?.parcelas_entrada || '',
   });
 
@@ -186,19 +205,34 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
       let image_url = editingProperty?.image_url;
       let pdf_url = editingProperty?.pdf_url;
 
-      if (imageFile) image_url = await uploadFile(imageFile, 'property-assets');
+      if (imageFile) {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          initialQuality: 0.8
+        };
+        try {
+          const compressedImage = await imageCompression(imageFile, options);
+          image_url = await uploadFile(compressedImage, 'property-assets');
+        } catch (error) {
+          console.error("Erro na compressão de imagem", error);
+          image_url = await uploadFile(imageFile, 'property-assets'); // fallback
+        }
+      }
+
       if (pdfFile) pdf_url = await uploadFile(pdfFile, 'property-assets');
 
       const propertyData = {
         ...formData,
-        price: Number(formData.price),
+        price: parseCurrency(formData.price),
         bedrooms: Number(formData.bedrooms),
         bathrooms: Number(formData.bathrooms),
         area: Number(formData.area),
         lat: Number(formData.lat),
         lng: Number(formData.lng),
-        valor_avaliacao_caixa: Number(formData.valor_avaliacao_caixa),
-        valor_imovel_construtora: Number(formData.valor_imovel_construtora),
+        valor_avaliacao_caixa: parseCurrency(formData.valor_avaliacao_caixa),
+        valor_imovel_construtora: parseCurrency(formData.valor_imovel_construtora),
         parcelas_entrada: Number(formData.parcelas_entrada),
         image_url,
         pdf_url,
@@ -275,11 +309,11 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Valor de Avaliação (Caixa)</label>
-                      <input type="number" value={formData.valor_avaliacao_caixa} onChange={e => setFormData({ ...formData, valor_avaliacao_caixa: e.target.value })} className="w-full px-4 py-2 bg-blue-50/50 border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-blue-900" required />
+                      <input type="text" value={formData.valor_avaliacao_caixa} onChange={e => setFormData({ ...formData, valor_avaliacao_caixa: formatCurrency(e.target.value) })} className="w-full px-4 py-2 bg-blue-50/50 border border-blue-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-blue-900" required />
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Valor do Empreendimento</label>
-                      <input type="number" value={formData.valor_imovel_construtora} onChange={e => setFormData({ ...formData, valor_imovel_construtora: e.target.value })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" required />
+                      <input type="text" value={formData.valor_imovel_construtora} onChange={e => setFormData({ ...formData, valor_imovel_construtora: formatCurrency(e.target.value) })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold" required />
                     </div>
                   </div>
 

@@ -12,6 +12,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [authLoading, setAuthLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | undefined>(undefined);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     // Check initial auth state
@@ -50,8 +52,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Tem certeza que deseja excluir este empreendimento?')) return;
-
+    setDeleting(id);
     const { error } = await supabase
       .from('properties')
       .delete()
@@ -60,8 +61,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     if (error) {
       alert('Erro ao excluir: ' + error.message);
     } else {
+      setConfirmDeleteId(null);
       fetchProperties();
     }
+    setDeleting(null);
   }
 
   if (authLoading) {
@@ -157,18 +160,40 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     
                     <div className="absolute top-3 right-3 flex space-x-1 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                      <button 
-                        onClick={() => { setEditingProperty(prop); setShowForm(true); }}
-                        className="p-2 bg-white rounded-lg shadow-lg text-slate-600 hover:text-blue-600 transition-colors"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(prop.id)}
-                        className="p-2 bg-white rounded-lg shadow-lg text-slate-600 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {confirmDeleteId === prop.id ? (
+                        <div className="bg-white rounded-lg shadow-xl p-1 flex items-center space-x-1 animate-in zoom-in-50 duration-200">
+                          <button 
+                            onClick={() => handleDelete(prop.id)}
+                            disabled={deleting === prop.id}
+                            className="px-2 py-1 bg-red-600 text-white text-[9px] font-black rounded uppercase tracking-tighter hover:bg-red-700 transition-colors disabled:opacity-50"
+                          >
+                            {deleting === prop.id ? '...' : 'Excluir'}
+                          </button>
+                          <button 
+                            onClick={() => setConfirmDeleteId(null)}
+                            disabled={deleting === prop.id}
+                            className="px-2 py-1 bg-slate-100 text-slate-500 text-[9px] font-black rounded uppercase tracking-tighter hover:bg-slate-200 transition-colors disabled:opacity-50"
+                          >
+                            Não
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={() => { setEditingProperty(prop); setShowForm(true); }}
+                            className="p-2 bg-white rounded-lg shadow-lg text-slate-600 hover:text-blue-600 transition-colors"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => setConfirmDeleteId(prop.id)}
+                            className="p-2 bg-white rounded-lg shadow-lg text-slate-600 hover:text-red-600 transition-colors"
+                            title="Excluir empreendimento"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
 
                     <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-slate-700 uppercase tracking-wider">
@@ -188,10 +213,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <div className="flex flex-col">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Valor Venda</span>
                         <span className="text-sm font-black text-slate-900">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(prop.valor_imovel_construtora || prop.price)}
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(prop.valor_imovel_construtora || prop.price)}
                         </span>
                         {prop.valor_avaliacao_caixa && (
-                          <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tighter mt-1">Av: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(prop.valor_avaliacao_caixa)}</span>
+                          <span className="text-[9px] font-bold text-blue-500 uppercase tracking-tighter mt-1">Av: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(prop.valor_avaliacao_caixa)}</span>
                         )}
                       </div>
                       {prop.pdf_url ? (

@@ -177,7 +177,7 @@ export default function MainLayout() {
                           <div className="text-right">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">A partir de</p>
                             <p className="text-2xl font-black text-imperio-blue-900 italic">
-                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(selectedProperty.valor_imovel_construtora || 0)}
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(selectedProperty.valor_imovel_construtora || 0)}
                             </p>
                           </div>
                         </div>

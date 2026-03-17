@@ -86,7 +86,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
 
         {filteredProperties.map((property) => {
           const isHovered = activeHoverId === property.id;
-          const priceStr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(property.price);
+          const priceStr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(property.price);
           
           return (
             <Marker
