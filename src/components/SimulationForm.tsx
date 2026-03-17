@@ -19,8 +19,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     phone: '',
     income: 5000,
     birthDate: '',
-    hasSecondBuyer: false,
-    dependents: 0,
+    hasDependentOrSecondBuyer: false,
   });
 
   const [result, setResult] = useState<null | {
@@ -129,22 +128,40 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       let displayFederalSubsidyRange = "";
       
       if (program === "Minha Casa Minha Vida") {
-        if (income >= 1800 && income <= 2000) {
-          if (formData.dependents === 0) {
-            projFederalSubsidy = 20000;
-            displayFederalSubsidyRange = "R$ 15.000 a R$ 25.000";
-          } else {
-            projFederalSubsidy = 50000;
-            displayFederalSubsidyRange = "R$ 45.000 a R$ 55.000";
-          }
-        } else if (income >= 2001 && income <= 2500) {
-          if (formData.dependents === 0) {
-            projFederalSubsidy = 7500;
-            displayFederalSubsidyRange = "R$ 5.000 a R$ 10.000";
-          } else {
-            projFederalSubsidy = 22500;
-            displayFederalSubsidyRange = "R$ 20.000 a R$ 25.000";
-          }
+        if (formData.hasDependentOrSecondBuyer) {
+            if (income <= 1800) projFederalSubsidy = 55000;
+            else if (income <= 1900) projFederalSubsidy = 50159;
+            else if (income <= 2000) projFederalSubsidy = 44477;
+            else if (income <= 2100) projFederalSubsidy = 39201;
+            else if (income <= 2200) projFederalSubsidy = 34594;
+            else if (income <= 2300) projFederalSubsidy = 30077;
+            else if (income <= 2400) projFederalSubsidy = 25933;
+            else if (income <= 2500) projFederalSubsidy = 22155;
+            else if (income <= 2600) projFederalSubsidy = 18733;
+            else if (income <= 2700) projFederalSubsidy = 15657;
+            else if (income <= 2800) projFederalSubsidy = 12916;
+            else if (income <= 2900) projFederalSubsidy = 10724;
+            else if (income <= 3000) projFederalSubsidy = 8592;
+            else projFederalSubsidy = 0; // Acima de 3000 o subsídio base zera (simplificação)
+            
+            displayFederalSubsidyRange = "R$ " + projFederalSubsidy.toLocaleString('pt-BR');
+        } else {
+            if (income <= 1800) projFederalSubsidy = 16500;
+            else if (income <= 1900) projFederalSubsidy = 15047;
+            else if (income <= 2000) projFederalSubsidy = 13343;
+            else if (income <= 2100) projFederalSubsidy = 11760;
+            else if (income <= 2200) projFederalSubsidy = 10378;
+            else if (income <= 2300) projFederalSubsidy = 9023;
+            else if (income <= 2400) projFederalSubsidy = 7780;
+            else if (income <= 2500) projFederalSubsidy = 6400;
+            else if (income <= 2600) projFederalSubsidy = 5100;
+            else if (income <= 2700) projFederalSubsidy = 4095;
+            else if (income <= 2800) projFederalSubsidy = 3250;
+            else if (income <= 2900) projFederalSubsidy = 2800;
+            else if (income <= 3000) projFederalSubsidy = 2577;
+            else projFederalSubsidy = 0;
+            
+            displayFederalSubsidyRange = "R$ " + projFederalSubsidy.toLocaleString('pt-BR');
         }
       }
 
@@ -192,7 +209,7 @@ Valor do Imovel (Construtora): ${formatCurrency(selectedProperty.valor_imovel_co
 PERFIL DO CLIENTE:
 - Renda Familiar: ${formatCurrency(income)}
 - Data Nasc: ${formData.birthDate} (Idade: ${age} anos)
-- Possui dependentes: ${formData.dependents > 0 ? 'Sim' : 'Não'}
+- Dependente/2º Comprador: ${formData.hasDependentOrSecondBuyer ? 'Sim' : 'Não'}
 
 PARÂMETROS DE FINANCIAMENTO:
 - Prazo Máximo Real: ${term} meses (Regra: min(420, (80 - ${age}) * 12))
@@ -246,8 +263,8 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         phone: formData.phone,
         income: income,
         birth_date: formData.birthDate,
-        dependents: formData.dependents,
-        has_second_buyer: formData.hasSecondBuyer
+        dependents: formData.hasDependentOrSecondBuyer ? 1 : 0,
+        has_second_buyer: formData.hasDependentOrSecondBuyer
       }]).then(({ error }) => {
         if (error) console.error("Erro ao salvar simulação:", error);
       });
@@ -260,11 +277,13 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
     }, 2000);
   };
 
+  const totalSubsidy = (result?.federalSubsidyActive ? result.federalSubsidyProjected : 0) + (result?.subsidyApplied ? 20000 : 0);
+
   const ctaMessage = encodeURIComponent(
     `Olá! Fiz uma simulação para o ${selectedProperty?.name}. 
     Renda: ${formatCurrency(formData.income)}
     Entrada: ${formatCurrency(result?.entry || 0)}
-    Parcela: ${formatCurrency(result?.parcel || 0)}
+    Parcela: ${formatCurrency(result?.parcel || 0)}${totalSubsidy > 0 ? `\n    Subsídio: ${formatCurrency(totalSubsidy)}` : ''}
     Gostaria de falar com um especialista.`
   );
   
@@ -410,35 +429,18 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Dependentes</label>
-                      <div className="flex items-center space-x-3">
-                        <Baby className="w-5 h-5 text-slate-400" />
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex items-center">
+                     <label className="flex items-center space-x-3 cursor-pointer group w-full">
                         <input 
-                          type="number" 
-                          min="0"
-                          max="10"
-                          value={formData.dependents}
-                          onChange={e => setFormData({ ...formData, dependents: Number(e.target.value) })}
-                          className="w-full bg-transparent font-bold text-slate-800 outline-none"
+                          type="checkbox" 
+                          checked={formData.hasDependentOrSecondBuyer}
+                          onChange={e => setFormData({ ...formData, hasDependentOrSecondBuyer: e.target.checked })}
+                          className="w-5 h-5 rounded-lg border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900/20"
                         />
-                      </div>
-                    </div>
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-center">
-                       <label className="flex items-center space-x-3 cursor-pointer group">
-                          <input 
-                            type="checkbox" 
-                            checked={formData.hasSecondBuyer}
-                            onChange={e => setFormData({ ...formData, hasSecondBuyer: e.target.checked })}
-                            className="w-5 h-5 rounded-lg border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900/20"
-                          />
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-700 uppercase leading-none">2º Comprador</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-1">Soma de Renda</span>
-                          </div>
-                       </label>
-                    </div>
+                        <div className="flex flex-col">
+                          <span className="text-[12px] font-black text-slate-700 uppercase tracking-widest">Possui 3 anos de FGTS, Dependente ou 2º Comprador</span>
+                        </div>
+                     </label>
                   </div>
                 </div>
               </div>
