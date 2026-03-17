@@ -5,9 +5,10 @@ import { supabase } from '../lib/supabaseClient';
 
 interface SimulationFormProps {
   property?: Property;
+  onSimulationComplete?: (formData: any) => void;
 }
 
-export default function SimulationForm({ property: initialProperty }: SimulationFormProps) {
+export default function SimulationForm({ property: initialProperty, onSimulationComplete }: SimulationFormProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -137,7 +138,8 @@ export default function SimulationForm({ property: initialProperty }: Simulation
       const propertyLimit = 320000;
       
       const meetsSubsidyConditions = income <= incomeLimit && evaluationValue <= propertyLimit;
-      const subsidy = meetsSubsidyConditions ? 20000 : 0;
+      const isPortaDeEntrada = selectedProperty?.porta_de_entrada !== false;
+      const subsidy = (meetsSubsidyConditions && isPortaDeEntrada) ? 20000 : 0;
       const finalEntry = Math.max(0, calculatedEntry - subsidy);
 
       // GERAR LOG DE DEBUG
@@ -166,6 +168,7 @@ CÁLCULO DO PLANO:
 5. Diferença (Imóvel - Financiado): ${formatCurrency(calculatedEntry)}
 
 SUBSÍDIO PORTA DE ENTRADA:
+- Participa do Programa: ${isPortaDeEntrada ? 'SIM' : 'NÃO'}
 - Atende Critérios (Renda <= 5SM e Imovel <= 320k): ${meetsSubsidyConditions ? 'SIM' : 'NÃO'}
 - Valor do Subsídio: ${formatCurrency(subsidy)}
 
@@ -191,6 +194,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         entryInstallments: selectedProperty.parcelas_entrada,
         debugLog: debugLog
       });
+
+      if (onSimulationComplete) {
+        onSimulationComplete(formData);
+      }
+
       setLoading(false);
     }, 2000);
   };

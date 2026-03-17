@@ -6,7 +6,7 @@ import AdminDashboard from './admin/AdminDashboard';
 import WhatsAppButton from './WhatsAppButton';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
-import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft } from 'lucide-react';
+import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight } from 'lucide-react';
 
 export default function MainLayout() {
   const [activeTab, setActiveTab] = useState<'apartments' | 'houses'>('apartments');
@@ -21,12 +21,18 @@ export default function MainLayout() {
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
 
+  // Recommendations State
+  const [simulationData, setSimulationData] = useState<any>(null);
+
   useEffect(() => {
     fetchProperties();
   }, []);
 
   useEffect(() => {
-    if (selectedProperty) setShowSimulator(false);
+    if (selectedProperty) {
+      setShowSimulator(false);
+      setSimulationData(null); // Reset when changing properties
+    }
   }, [selectedProperty]);
 
   async function fetchProperties() {
@@ -40,6 +46,72 @@ export default function MainLayout() {
   if (isAdmin) {
     return <AdminDashboard onExit={() => { setIsAdmin(false); fetchProperties(); }} />;
   }
+
+  const calculateAge = (birthDate: string) => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const generateRecommendations = () => {
+    if (!simulationData || !selectedProperty) return [];
+    
+    let others = properties.filter(p => p.id !== selectedProperty.id && p.type === selectedProperty.type);
+    if (others.length < 3) {
+      const more = properties.filter(p => p.id !== selectedProperty.id && p.type !== selectedProperty.type);
+      others = [...others, ...more];
+    }
+    others = others.slice(0, 3);
+
+    const { income, birthDate } = simulationData;
+    if (!income || !birthDate) return [];
+
+    const age = calculateAge(birthDate);
+    const maxTermByAge = (80 - age) * 12;
+    const term = Math.min(420, maxTermByAge);
+    const iAnnual = 0.0847;
+    const iMonthly = iAnnual / 12;
+    const maxInstallment = income * 0.30;
+    const minSalary = 1518;
+    const incomeLimit = minSalary * 5;
+    const propertyLimit = 320000;
+
+    const calculatePMT = (pv: number, i: number, n: number) => {
+      return pv * ( (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1) );
+    };
+
+    return others.map(prop => {
+      const evaluationValue = prop.valor_avaliacao_caixa || 200000;
+      let financedAmount = evaluationValue * 0.80;
+      let currentParcel = calculatePMT(financedAmount, iMonthly, term);
+
+      while (currentParcel > maxInstallment && financedAmount > 0) {
+        financedAmount -= (evaluationValue * 0.01);
+        currentParcel = calculatePMT(financedAmount, iMonthly, term);
+      }
+
+      const propertyValue = prop.valor_imovel_construtora || evaluationValue;
+      const calculatedEntry = propertyValue - financedAmount;
+      const meetsSubsidyConditions = income <= incomeLimit && evaluationValue <= propertyLimit;
+      const isPortaDeEntrada = prop.porta_de_entrada !== false;
+      const subsidy = (meetsSubsidyConditions && isPortaDeEntrada) ? 20000 : 0;
+      const finalEntry = Math.max(0, calculatedEntry - subsidy);
+
+      return {
+        property: prop,
+        parcel: currentParcel,
+        entry: finalEntry,
+        term: term
+      };
+    });
+  };
+
+  const recommendations = generateRecommendations();
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans">
@@ -132,13 +204,56 @@ export default function MainLayout() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-300">
             <div className="bg-white w-[95vw] md:w-[80vw] lg:w-[850px] lg:h-[850px] max-h-[92vh] rounded-[40px] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500">
               
-              {/* Imagem em Destaque */}
-              <div className="w-full md:w-1/2 min-h-[300px] md:min-h-0 relative">
-                <img src={selectedProperty.image_url} alt={selectedProperty.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              {/* Imagem em Destaque e Recomendações */}
+              <div className="w-full md:w-1/2 min-h-[300px] md:min-h-0 relative flex flex-col justify-center items-center">
+                <img src={selectedProperty.image_url} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" />
+                <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
+                
+                {/* Recomendações Overlay */}
+                {simulationData && recommendations.length > 0 && (
+                  <div className="relative z-10 w-full max-w-sm p-6 animate-in slide-in-from-bottom-8 fade-in duration-700 flex flex-col">
+                     <div className="flex items-center space-x-2 mb-6">
+                        <Sparkles className="w-6 h-6 text-imperio-gold-500" />
+                        <h4 className="text-white font-black uppercase tracking-widest text-sm">Outras Opções para Você</h4>
+                     </div>
+                     <div className="space-y-4 max-h-[60vh] overflow-y-auto scrollbar-hide pr-2">
+                        {recommendations.map((rec, idx) => (
+                          <div 
+                            key={rec.property.id} 
+                            onClick={() => setSelectedProperty(rec.property)}
+                            className="bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group hover:scale-[1.03] hover:shadow-2xl hover:shadow-imperio-gold-500/10 hover:border-white/20"
+                            style={{ animationDelay: `${idx * 100}ms` }}
+                          >
+                             <img src={rec.property.image_url} className="w-20 h-20 rounded-2xl object-cover shadow-lg group-hover:shadow-imperio-gold-500/20 transition-all" alt="Thumb" />
+                             <div className="flex-1">
+                                <h5 className="text-white text-sm font-black uppercase tracking-tight line-clamp-2 group-hover:text-imperio-gold-500 transition-colors leading-tight mb-1">{rec.property.name}</h5>
+                                {rec.property.neighborhood && (
+                                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mb-2 flex items-center">
+                                    <MapPin className="w-3 h-3 mr-1 text-imperio-gold-500" />
+                                    {rec.property.neighborhood}
+                                  </p>
+                                )}
+                                <div className="flex flex-col space-y-1">
+                                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex justify-between">
+                                     <span>Parcelas:</span> 
+                                     <strong className="text-white font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(rec.parcel)}</strong>
+                                   </p>
+                                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex justify-between">
+                                     <span>Entrada:</span> 
+                                     <strong className="text-imperio-gold-500 font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(rec.entry)}</strong>
+                                   </p>
+                                </div>
+                             </div>
+                             <ChevronRight className="w-5 h-5 text-white/20 group-hover:text-white transition-colors ml-2" />
+                          </div>
+                        ))}
+                     </div>
+                  </div>
+                )}
+
                 <button 
                   onClick={() => setSelectedProperty(undefined)}
-                  className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white p-2 rounded-full hover:bg-white/40 transition-colors md:hidden"
+                  className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white p-2 rounded-full hover:bg-white/40 transition-colors md:hidden z-20"
                 >
                   <CloseIcon className="w-5 h-5" />
                 </button>
@@ -157,13 +272,16 @@ export default function MainLayout() {
                   {showSimulator ? (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                        <button 
-                         onClick={() => setShowSimulator(false)}
+                         onClick={() => {
+                           setShowSimulator(false);
+                           setSimulationData(null);
+                         }}
                          className="mb-6 flex items-center space-x-2 text-slate-400 hover:text-slate-900 transition-colors font-bold text-[10px] uppercase tracking-[0.2em]"
                        >
                          <ChevronLeft className="w-4 h-4" />
                          <span>Voltar aos Detalhes</span>
                        </button>
-                       <SimulationForm property={selectedProperty} />
+                       <SimulationForm property={selectedProperty} onSimulationComplete={setSimulationData} />
                     </div>
                   ) : (
                     <>
@@ -223,6 +341,12 @@ export default function MainLayout() {
                             <span>Simular Financiamento</span>
                           </button>
                         </div>
+                        {selectedProperty.description && (
+                          <div className="mt-6 pt-6 border-t border-slate-100">
+                            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Sobre o Empreendimento</h3>
+                            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{selectedProperty.description}</p>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}

@@ -84,6 +84,9 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
     valor_avaliacao_caixa: editingProperty?.valor_avaliacao_caixa ? formatCurrency(editingProperty.valor_avaliacao_caixa.toFixed(2).replace('.', '')) : '',
     valor_imovel_construtora: editingProperty?.valor_imovel_construtora ? formatCurrency(editingProperty.valor_imovel_construtora.toFixed(2).replace('.', '')) : '',
     parcelas_entrada: editingProperty?.parcelas_entrada || '',
+    delivery_date: editingProperty?.delivery_date || '',
+    is_ready: editingProperty?.is_ready || false,
+    porta_de_entrada: editingProperty?.porta_de_entrada !== false,
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -234,6 +237,9 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
         valor_avaliacao_caixa: parseCurrency(formData.valor_avaliacao_caixa),
         valor_imovel_construtora: parseCurrency(formData.valor_imovel_construtora),
         parcelas_entrada: Number(formData.parcelas_entrada),
+        delivery_date: formData.is_ready ? null : formData.delivery_date,
+        is_ready: Boolean(formData.is_ready),
+        porta_de_entrada: Boolean(formData.porta_de_entrada),
         image_url,
         pdf_url,
       };
@@ -317,9 +323,36 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Parcelamento da Entrada (Sem Juros)</label>
-                    <input type="number" value={formData.parcelas_entrada} onChange={e => setFormData({ ...formData, parcelas_entrada: e.target.value })} placeholder="Ex: 24, 36, 60..." className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-emerald-700" required />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight">Parcelamento da Entrada (Sem Juros)</label>
+                      <input type="number" value={formData.parcelas_entrada} onChange={e => setFormData({ ...formData, parcelas_entrada: e.target.value })} placeholder="Ex: 24, 36, 60..." className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-emerald-700" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-tight flex items-center justify-between">
+                         <span>Prazo de Entrega</span>
+                         <label className="flex items-center space-x-1 cursor-pointer">
+                            <input type="checkbox" checked={formData.is_ready} onChange={e => setFormData({ ...formData, is_ready: e.target.checked })} className="w-3 h-3 text-blue-600 rounded bg-slate-100 border-slate-300 focus:ring-blue-500" />
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">Pronto</span>
+                         </label>
+                      </label>
+                      {!formData.is_ready ? (
+                        <input type="text" value={formData.delivery_date} onChange={e => setFormData({ ...formData, delivery_date: e.target.value })} placeholder="Ex: Dez / 2025" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 text-sm font-medium text-slate-700" required />
+                      ) : (
+                        <div className="w-full px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-600 text-sm font-bold flex items-center justify-center">Imóvel Pronto</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50/40 p-3 rounded-lg border border-blue-100 flex items-center justify-between">
+                     <div className="flex flex-col">
+                        <span className="text-xs font-bold text-blue-900 uppercase">Programa Porta de Entrada</span>
+                        <span className="text-[10px] font-medium text-slate-500">Aplica desconto de R$20.000,00 na simulação</span>
+                     </div>
+                     <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked={formData.porta_de_entrada} onChange={e => setFormData({ ...formData, porta_de_entrada: e.target.checked })} className="sr-only peer" />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                     </label>
                   </div>
 
                   <div className="border-t border-slate-50 pt-2">

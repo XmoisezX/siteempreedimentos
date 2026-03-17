@@ -18,6 +18,9 @@ export interface Property {
   valor_avaliacao_caixa?: number;
   valor_imovel_construtora?: number;
   parcelas_entrada?: number;
+  delivery_date?: string;
+  is_ready?: boolean;
+  porta_de_entrada?: boolean;
   created_at?: string;
 }
 
