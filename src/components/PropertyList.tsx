@@ -28,6 +28,8 @@ export default function PropertyList({ category, properties, onHover, onSelect }
             <img 
               src={property.image_url} 
               alt={property.name} 
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           </div>

@@ -108,7 +108,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
               >
                 <div className="bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden w-64 transform transition-all duration-300 scale-in-center">
                   <div className="relative h-32">
-                    <img src={property.image_url} className="w-full h-full object-cover" alt={property.name} />
+                    <img src={property.image_url} className="w-full h-full object-cover" alt={property.name} loading="lazy" decoding="async" />
                     <div className="absolute top-2 right-2 bg-imperio-blue-900 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-lg">
                       {priceStr}
                     </div>
@@ -137,7 +137,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
 
               <Popup className="rounded-xl overflow-hidden hidden">
                 <div className="p-1 min-w-[150px]">
-                   <img src={property.image_url} className="w-full h-24 object-cover rounded-lg mb-2" alt="" />
+                   <img src={property.image_url} className="w-full h-24 object-cover rounded-lg mb-2" alt="" loading="lazy" decoding="async" />
                    <h4 className="font-bold text-slate-800 leading-tight mb-1">{property.name}</h4>
                    <p className="text-xs text-slate-500">{property.neighborhood}</p>
                 </div>

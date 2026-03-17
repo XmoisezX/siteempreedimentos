@@ -206,7 +206,7 @@ export default function MainLayout() {
               
               {/* Imagem em Destaque e Recomendações */}
               <div className="w-full md:w-1/2 min-h-[300px] md:min-h-0 relative flex flex-col justify-center items-center">
-                <img src={selectedProperty.image_url} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" />
+                <img src={selectedProperty.image_url} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
                 
                 {/* Recomendações Overlay */}
@@ -224,7 +224,7 @@ export default function MainLayout() {
                             className="bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group hover:scale-[1.03] hover:shadow-2xl hover:shadow-imperio-gold-500/10 hover:border-white/20"
                             style={{ animationDelay: `${idx * 100}ms` }}
                           >
-                             <img src={rec.property.image_url} className="w-20 h-20 rounded-2xl object-cover shadow-lg group-hover:shadow-imperio-gold-500/20 transition-all" alt="Thumb" />
+                             <img src={rec.property.image_url} className="w-20 h-20 rounded-2xl object-cover shadow-lg group-hover:shadow-imperio-gold-500/20 transition-all" alt="Thumb" loading="lazy" decoding="async" />
                              <div className="flex-1">
                                 <h5 className="text-white text-sm font-black uppercase tracking-tight line-clamp-2 group-hover:text-imperio-gold-500 transition-colors leading-tight mb-1">{rec.property.name}</h5>
                                 {rec.property.neighborhood && (
