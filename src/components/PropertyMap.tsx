@@ -46,6 +46,13 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
   const createCustomIcon = (property: Property, isHovered: boolean) => {
     const mainBg = isHovered ? 'bg-imperio-gold-500' : 'bg-imperio-blue-900';
     const scale = isHovered ? 'scale-125 z-[1000]' : 'scale-100 z-10';
+    const priceValue = property.valor_imovel_construtora || property.price;
+    const priceStr = new Intl.NumberFormat('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL', 
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2 
+    }).format(priceValue);
     
     return L.divIcon({
       className: 'custom-leaflet-marker',
@@ -55,17 +62,17 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
           <div class="absolute -inset-1 ${mainBg} opacity-30 rounded-full animate-pulse blur-sm"></div>
           
           <!-- Pin Body -->
-          <div class="${mainBg} text-white px-4 py-2 rounded-xl font-black text-[11px] shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 whitespace-nowrap border-2 border-white/30 uppercase tracking-tight flex items-center space-x-2 backdrop-blur-sm">
-            <div class="w-1.5 h-1.5 rounded-full bg-white shadow-sm shadow-white/50"></div>
-            <span class="max-w-[110px] truncate font-sans">${property.name}</span>
+          <div class="${mainBg} text-white px-4 py-2 rounded-xl font-black shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 whitespace-nowrap border-2 border-white/30 uppercase tracking-tight flex flex-col items-center justify-center backdrop-blur-sm min-w-[100px]">
+            <span class="max-w-[130px] truncate font-sans text-[9px] opacity-80 leading-none mb-1">${property.name}</span>
+            <span class="font-extrabold text-white tracking-normal text-[12px] leading-none">${priceStr}</span>
           </div>
           
           <!-- Pin Pointer -->
           <div class="w-3.5 h-3.5 rotate-45 -mt-3 ${mainBg} border-b-2 border-r-2 border-white/30 shadow-2xl"></div>
         </div>
       `,
-      iconSize: [140, 60],
-      iconAnchor: [70, 50],
+      iconSize: [140, 75],
+      iconAnchor: [70, 65],
     });
   };
 
@@ -82,7 +89,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <MapFlyTo hoveredPropertyId={activeHoverId} filteredProperties={filteredProperties} />
+        <MapFlyTo hoveredPropertyId={hoveredPropertyId} filteredProperties={filteredProperties} />
 
         {filteredProperties.map((property) => {
           const isHovered = activeHoverId === property.id;

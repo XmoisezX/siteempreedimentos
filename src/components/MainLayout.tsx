@@ -6,10 +6,11 @@ import AdminDashboard from './admin/AdminDashboard';
 import WhatsAppButton from './WhatsAppButton';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
-import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight } from 'lucide-react';
+import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon } from 'lucide-react';
 
 export default function MainLayout() {
   const [activeTab, setActiveTab] = useState<'apartments' | 'houses'>('apartments');
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
   const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -158,7 +159,7 @@ export default function MainLayout() {
       {/* Main Content Split */}
       <main className="flex flex-1 overflow-hidden relative">
         {/* Lado Esquerdo: Listagem (40%) */}
-        <div className="w-full md:w-[450px] lg:w-[500px] flex flex-col bg-white border-r border-slate-100 z-10 shadow-2xl relative">
+        <div className={`w-full md:w-[450px] lg:w-[500px] flex flex-col bg-white border-r border-slate-100 z-10 shadow-2xl relative ${mobileView === 'map' ? 'hidden md:flex' : 'flex'}`}>
           
           {/* Tabs Elevadas */}
           <div className="p-6 pb-2">
@@ -206,7 +207,7 @@ export default function MainLayout() {
         </div>
 
         {/* Lado Direito: Mapa (Ocupa o resto) */}
-        <div className="flex-1 hidden md:block relative bg-slate-200">
+        <div className={`flex-1 relative bg-slate-200 ${mobileView === 'list' ? 'hidden md:block' : 'block'}`}>
            <PropertyMap 
              hoveredPropertyId={hoveredPropertyId} 
              category={activeTab}
@@ -216,6 +217,26 @@ export default function MainLayout() {
            
            {/* Overlay Decorativo Gradiente */}
            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/5 to-transparent pointer-events-none z-10" />
+        </div>
+
+        {/* Floating Toggle Button for Mobile */}
+        <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center justify-center w-full px-4">
+          <button
+            onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
+            className="bg-imperio-blue-900 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(15,38,92,0.3)] flex items-center space-x-3 font-black uppercase tracking-[0.2em] text-[10px] border border-white/10 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-4 duration-500"
+          >
+            {mobileView === 'list' ? (
+              <>
+                <MapIcon className="w-4 h-4 text-imperio-gold-500" />
+                <span>Ver no Mapa</span>
+              </>
+            ) : (
+              <>
+                <ListIcon className="w-4 h-4 text-imperio-gold-500" />
+                <span>Ver Lista</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Modal de Detalhes (Slide-in) */}
