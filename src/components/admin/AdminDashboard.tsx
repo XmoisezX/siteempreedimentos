@@ -4,7 +4,8 @@ import type { Property } from '../../data/mockData';
 import PropertyForm from './PropertyForm';
 import LoginForm from './LoginForm';
 import SimulationsList from './SimulationsList';
-import { Plus, Trash2, Edit3, LogOut, Loader2, FileText, User, Building2, Users } from 'lucide-react';
+import BrokersList from './BrokersList';
+import { Plus, Trash2, Edit3, LogOut, Loader2, FileText, User, Building2, Users, MessageCircle } from 'lucide-react';
 
 export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [session, setSession] = useState<any>(null);
@@ -12,7 +13,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'properties' | 'simulations'>('properties');
+  const [activeTab, setActiveTab] = useState<'properties' | 'simulations' | 'brokers'>('properties');
   const [editingProperty, setEditingProperty] = useState<Property | undefined>(undefined);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -117,11 +118,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               <Users className="w-3.5 h-3.5" />
               <span>Leads</span>
             </button>
+            <button
+              onClick={() => setActiveTab('brokers')}
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'brokers' ? 'bg-white text-imperio-blue-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>Corretores</span>
+            </button>
           </div>
 
           <button 
             onClick={() => { setEditingProperty(undefined); setShowForm(true); }}
-            className={`flex items-center space-x-2 bg-imperio-blue-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95 ${activeTab === 'simulations' ? 'hidden' : ''}`}
+            className={`flex items-center space-x-2 bg-imperio-blue-900 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95 ${activeTab !== 'properties' ? 'hidden' : ''}`}
           >
             <Plus className="w-4 h-4" />
             <span>Novo Imóvel</span>
@@ -151,6 +159,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         <div className="max-w-7xl mx-auto">
           {activeTab === 'simulations' ? (
             <SimulationsList />
+          ) : activeTab === 'brokers' ? (
+            <BrokersList />
           ) : (
             <>
               {loading ? (

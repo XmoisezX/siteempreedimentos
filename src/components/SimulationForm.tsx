@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Sparkles, Building2, Phone, UserCircle2, Download, MessageCircle } from 'lucide-react';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
+import { getRotatedBrokerPhone } from '../lib/brokers';
 
 interface SimulationFormProps {
   property?: Property;
@@ -37,6 +38,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     entryInstallments?: number;
     debugLog?: string;
   }>(null);
+  const [assignedBrokerPhone, setAssignedBrokerPhone] = useState('5553994445566');
 
   useEffect(() => {
     if (!initialProperty) {
@@ -48,6 +50,12 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     const { data } = await supabase.from('properties').select('*').order('name');
     if (data) setProperties(data);
   }
+
+  useEffect(() => {
+    if (result && !loading) {
+      getRotatedBrokerPhone().then(phone => setAssignedBrokerPhone(phone));
+    }
+  }, [result, loading]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { 
@@ -287,7 +295,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
     Gostaria de falar com um especialista.`
   );
   
-  const whatsappLink = `https://wa.me/5553994445566?text=${ctaMessage}`;
+  const whatsappLink = `https://wa.me/${assignedBrokerPhone}?text=${ctaMessage}`;
 
   return (
     <div className="bg-white rounded-3xl relative h-auto flex flex-col p-2">
