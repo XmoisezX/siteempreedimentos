@@ -44,6 +44,11 @@ export default function PropertyList({ category, properties, onHover, onSelect }
                 <h3 className="text-lg font-bold text-slate-800 leading-tight group-hover:text-imperio-blue-800 transition-colors">
                   {property.name}
                 </h3>
+                <div className="flex items-center mt-1 space-x-2">
+                  <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${property.is_ready ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                    {property.is_ready ? 'Pronto para Morar' : `Entrega: ${property.delivery_date || 'A Definir'}`}
+                  </div>
+                </div>
                 {property.company && (
                   <div className="flex items-center text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
                     <Building2 className="w-3 h-3 mr-1" />

@@ -335,9 +335,14 @@ export default function MainLayout() {
                           <div className="text-right">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">A partir de</p>
                             <p className="text-2xl font-black text-imperio-blue-900 italic">
-                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(selectedProperty.valor_imovel_construtora || 0)}
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(selectedProperty.valor_imovel_construtora || selectedProperty.price || 0)}
                             </p>
                           </div>
+                        </div>
+                        <div className="flex items-center mt-2 space-x-2">
+                           <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${selectedProperty.is_ready ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                             {selectedProperty.is_ready ? 'Pronto para Morar' : `Prazo de Entrega: ${selectedProperty.delivery_date || 'A Definir'}`}
+                           </div>
                         </div>
                         {selectedProperty.address && (
                           <div className="flex flex-col mt-2">

@@ -93,7 +93,8 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
 
         {filteredProperties.map((property) => {
           const isHovered = activeHoverId === property.id;
-          const priceStr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(property.price);
+          const priceValue = property.valor_imovel_construtora || property.price;
+          const priceStr = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(priceValue);
           
           return (
             <Marker
@@ -122,7 +123,13 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
                   </div>
                   <div className="p-3">
                     <h4 className="font-bold text-slate-800 text-sm mb-1 truncate">{property.name}</h4>
-                    <p className="text-[10px] text-slate-500 mb-3">{property.neighborhood}</p>
+                    <p className="text-[10px] text-slate-500 mb-2">{property.neighborhood}</p>
+                    
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${property.is_ready ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                        {property.is_ready ? 'Pronto para Morar' : `Entrega: ${property.delivery_date || 'A Definir'}`}
+                      </div>
+                    </div>
                     
                     <div className="flex items-center justify-between border-t border-slate-50 pt-2 text-slate-600">
                       <div className="flex items-center space-x-1">
