@@ -294,7 +294,7 @@ export default function MainLayout() {
 
                 <button 
                   onClick={() => setSelectedProperty(undefined)}
-                  className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white p-2 rounded-full hover:bg-white/40 transition-colors md:hidden z-20"
+                  className="absolute top-4 left-4 bg-red-600 text-white p-2.5 rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.5)] border-2 border-white hover:bg-red-700 active:scale-95 transition-all md:hidden z-[100] flex items-center justify-center"
                 >
                   <CloseIcon className="w-5 h-5" />
                 </button>
@@ -304,9 +304,10 @@ export default function MainLayout() {
               <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-y-auto flex-1 min-h-0 scrollbar-hide">
                 <button 
                   onClick={() => setSelectedProperty(undefined)}
-                  className="absolute top-4 right-4 text-slate-300 hover:text-slate-900 transition-colors hidden md:block"
+                  className="absolute top-4 right-4 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-full transition-all hidden md:flex items-center justify-center z-50 group"
+                  title="Fechar"
                 >
-                  <CloseIcon className="w-6 h-6" />
+                  <CloseIcon className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
                 </button>
 
                 <div className="p-8 pb-4">

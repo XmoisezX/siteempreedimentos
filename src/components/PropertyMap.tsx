@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Property } from '../data/mockData';
 import L from 'leaflet';
@@ -145,14 +145,6 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
                   </div>
                 </div>
               </Tooltip>
-
-              <Popup className="rounded-xl overflow-hidden hidden">
-                <div className="p-1 min-w-[150px]">
-                   <img src={property.image_url} className="w-full h-24 object-cover rounded-lg mb-2" alt="" loading="lazy" decoding="async" />
-                   <h4 className="font-bold text-slate-800 leading-tight mb-1">{property.name}</h4>
-                   <p className="text-xs text-slate-500">{property.neighborhood}</p>
-                </div>
-              </Popup>
             </Marker>
           );
         })}
