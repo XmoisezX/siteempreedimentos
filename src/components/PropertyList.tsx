@@ -18,8 +18,8 @@ export default function PropertyList({ category, properties, onHover, onSelect }
       {filteredProperties.map((property) => (
         <div 
           key={property.id}
-          onMouseEnter={() => onHover(property.id)}
-          onMouseLeave={() => onHover(null)}
+          onPointerEnter={(e) => e.pointerType === 'mouse' && onHover(property.id)}
+          onPointerLeave={(e) => e.pointerType === 'mouse' && onHover(null)}
           onClick={() => onSelect(property)}
           className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-100 p-4 transition-all duration-300 cursor-pointer flex flex-col md:flex-row group"
         >

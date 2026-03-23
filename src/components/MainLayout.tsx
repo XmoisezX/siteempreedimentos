@@ -221,10 +221,10 @@ export default function MainLayout() {
         </div>
 
         {/* Floating Toggle Button for Mobile */}
-        <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center justify-center w-full px-4">
+        <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center justify-center w-full px-4 pointer-events-none">
           <button
             onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
-            className="bg-imperio-blue-900 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(15,38,92,0.3)] flex items-center space-x-3 font-black uppercase tracking-[0.2em] text-[10px] border border-white/10 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-4 duration-500"
+            className="pointer-events-auto bg-imperio-blue-900 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(15,38,92,0.3)] flex items-center space-x-3 font-black uppercase tracking-[0.2em] text-[10px] border border-white/10 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-4 duration-500"
           >
             {mobileView === 'list' ? (
               <>
@@ -246,7 +246,7 @@ export default function MainLayout() {
             <div className="bg-white w-[95vw] md:w-[80vw] lg:w-[850px] lg:h-[850px] max-h-[92vh] rounded-[40px] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500">
               
               {/* Imagem em Destaque e Recomendações */}
-              <div className="w-full md:w-1/2 min-h-[300px] md:min-h-0 relative flex flex-col justify-center items-center">
+              <div className="w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex flex-col justify-center items-center shrink-0">
                 <img src={selectedProperty.image_url} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
                 
@@ -301,7 +301,7 @@ export default function MainLayout() {
               </div>
 
               {/* Informações e Formulário */}
-              <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-y-auto h-full scrollbar-hide">
+              <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-y-auto flex-1 min-h-0 scrollbar-hide">
                 <button 
                   onClick={() => setSelectedProperty(undefined)}
                   className="absolute top-4 right-4 text-slate-300 hover:text-slate-900 transition-colors hidden md:block"

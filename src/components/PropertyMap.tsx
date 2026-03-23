@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Property } from '../data/mockData';
@@ -37,15 +37,14 @@ function MapFlyTo({ hoveredPropertyId, filteredProperties }: { hoveredPropertyId
 }
 
 export default function PropertyMap({ hoveredPropertyId, category, properties, onSelect }: PropertyMapProps) {
-  const [internalHoverId, setInternalHoverId] = useState<string | null>(null);
   const filteredProperties = useMemo(() => properties.filter((p) => p.type === category), [category, properties]);
 
-  const activeHoverId = hoveredPropertyId || internalHoverId;
+  const activeHoverId = hoveredPropertyId;
 
   // Custom Marker HTML showing Name - Re-designed to be more eye-catching
-  const createCustomIcon = (property: Property, isHovered: boolean) => {
-    const mainBg = isHovered ? 'bg-imperio-gold-500' : 'bg-imperio-blue-900';
-    const scale = isHovered ? 'scale-125 z-[1000]' : 'scale-100 z-10';
+  const createCustomIcon = (property: Property, isListHovered: boolean) => {
+    const mainBg = isListHovered ? 'bg-imperio-gold-500' : 'bg-imperio-blue-900';
+    const scale = isListHovered ? 'scale-125 z-[1000]' : 'scale-100 z-10';
     const priceValue = property.valor_imovel_construtora || property.price;
     const priceStr = new Intl.NumberFormat('pt-BR', { 
       style: 'currency', 
@@ -55,20 +54,20 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
     }).format(priceValue);
     
     return L.divIcon({
-      className: 'custom-leaflet-marker',
+      className: 'custom-leaflet-marker group',
       html: `
-        <div class="relative flex flex-col items-center transition-all duration-300 ${scale}">
-          <!-- Pulse Animation (Only when hovered or prominent) -->
-          <div class="absolute -inset-1 ${mainBg} opacity-30 rounded-full animate-pulse blur-sm"></div>
+        <div class="relative flex flex-col items-center transition-all duration-300 ${isListHovered ? scale : 'group-hover:scale-125 group-hover:z-[1000] scale-100 z-10'}">
+          <!-- Pulse Animation -->
+          <div class="absolute -inset-1 ${isListHovered ? mainBg : 'bg-imperio-gold-500'} opacity-${isListHovered ? '30' : '0 group-hover:opacity-30'} rounded-full animate-pulse blur-sm transition-opacity"></div>
           
           <!-- Pin Body -->
-          <div class="${mainBg} text-white px-4 py-2 rounded-xl font-black shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 whitespace-nowrap border-2 border-white/30 uppercase tracking-tight flex flex-col items-center justify-center backdrop-blur-sm min-w-[100px]">
+          <div class="${isListHovered ? mainBg : 'bg-imperio-blue-900 group-hover:bg-imperio-gold-500'} text-white px-4 py-2 rounded-xl font-black shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 whitespace-nowrap border-2 border-white/30 uppercase tracking-tight flex flex-col items-center justify-center backdrop-blur-sm min-w-[100px] transition-colors">
             <span class="max-w-[130px] truncate font-sans text-[9px] opacity-80 leading-none mb-1">${property.name}</span>
             <span class="font-extrabold text-white tracking-normal text-[12px] leading-none">${priceStr}</span>
           </div>
           
           <!-- Pin Pointer -->
-          <div class="w-3.5 h-3.5 rotate-45 -mt-3 ${mainBg} border-b-2 border-r-2 border-white/30 shadow-2xl"></div>
+          <div class="w-3.5 h-3.5 rotate-45 -mt-3 ${isListHovered ? mainBg : 'bg-imperio-blue-900 group-hover:bg-imperio-gold-500'} border-b-2 border-r-2 border-white/30 shadow-2xl transition-colors"></div>
         </div>
       `,
       iconSize: [140, 75],
@@ -103,8 +102,6 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
               icon={createCustomIcon(property, isHovered)}
               eventHandlers={{
                 click: () => onSelect(property),
-                mouseover: () => setInternalHoverId(property.id),
-                mouseout: () => setInternalHoverId(null),
               }}
             >
               <Tooltip 
@@ -112,7 +109,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
                 direction="top" 
                 offset={[0, -45]} 
                 opacity={1}
-                className="custom-property-tooltip p-0 border-none bg-transparent shadow-none"
+                className="custom-property-tooltip p-0 border-none bg-transparent shadow-none hidden md:block pointer-events-none"
               >
                 <div className="bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden w-64 transform transition-all duration-300 scale-in-center">
                   <div className="relative h-32">
