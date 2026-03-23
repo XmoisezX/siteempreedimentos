@@ -242,8 +242,8 @@ export default function MainLayout() {
 
         {/* Modal de Detalhes (Slide-in) */}
         {selectedProperty && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-300">
-            <div className="bg-white w-[95vw] md:w-[80vw] lg:w-[850px] lg:h-[850px] max-h-[92vh] rounded-[40px] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-300 overflow-hidden">
+            <div className="bg-white w-full max-w-[100vw] md:w-[80vw] lg:w-[850px] lg:h-[850px] max-h-[92vh] rounded-[32px] md:rounded-[40px] overflow-x-hidden overflow-y-auto md:overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500 relative">
               
               {/* Imagem em Destaque e Recomendações */}
               <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden ${simulationData ? 'hidden md:flex' : 'flex'}`}>
@@ -301,7 +301,7 @@ export default function MainLayout() {
               </div>
 
               {/* Informações e Formulário */}
-              <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-y-auto flex-1 min-h-0 scrollbar-hide">
+              <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-y-auto overflow-x-hidden flex-1 min-h-0 scrollbar-hide">
                 <button 
                   onClick={() => setSelectedProperty(undefined)}
                   className="absolute top-4 right-4 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-full transition-all hidden md:flex items-center justify-center z-50 group"
@@ -331,10 +331,10 @@ export default function MainLayout() {
                         Pronto para Simular
                       </span>
                       
-                      <div className="flex flex-col mb-6">
-                        <div className="flex justify-between items-start">
-                          <h2 className="text-3xl font-black text-slate-900 leading-none tracking-tighter uppercase italic">{selectedProperty.name}</h2>
-                          <div className="text-right">
+                      <div className="flex flex-col mb-6 w-full overflow-hidden">
+                        <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-4">
+                          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-none tracking-tighter uppercase italic break-words w-full sm:w-auto overflow-wrap-normal hyphens-auto">{selectedProperty.name}</h2>
+                          <div className="text-left sm:text-right shrink-0">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">A partir de</p>
                             <p className="text-2xl font-black text-imperio-blue-900 italic">
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(selectedProperty.valor_imovel_construtora || selectedProperty.price || 0)}

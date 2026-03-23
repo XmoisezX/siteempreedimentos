@@ -595,15 +595,23 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                </div>
              )}
              {result.entry > 0 && result.entryInstallments && (
-               <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-[9px] font-black text-emerald-800 uppercase tracking-widest leading-none">Entrada Parcelada</span>
-                    <span className="text-[10px] font-bold text-emerald-600 uppercase mt-1">Sem Juros Direto com a Construtora</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-black text-emerald-700 italic">Até {result.entryInstallments}x</span>
-                  </div>
-               </div>
+                 <div className="mt-4 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex flex-col relative overflow-hidden">
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-emerald-100/50 to-transparent pointer-events-none"></div>
+                    <div className="flex justify-between items-start w-full mb-3 relative z-10">
+                      <div className="flex flex-col">
+                         <span className="text-[9px] font-black text-emerald-800 uppercase tracking-widest leading-none">Entrada Parcelada</span>
+                         <span className="text-[9px] font-bold text-emerald-600/80 uppercase mt-1 line-clamp-1">S/ Juros com a Construtora</span>
+                      </div>
+                      <span className="text-xs font-black text-emerald-700 italic border border-emerald-200/50 bg-white rounded-[8px] px-2.5 py-1 shadow-sm shrink-0 whitespace-nowrap ml-2">Até {result.entryInstallments}x</span>
+                    </div>
+                    
+                    <div className="bg-white border border-emerald-100 rounded-[10px] p-3 flex justify-between items-center relative z-10 shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
+                       <span className="text-[8px] sm:text-[9px] font-bold text-emerald-700 uppercase tracking-[0.15em] shrink-0 mr-2">Parcela Mensal Estimada</span>
+                       <span className="text-lg sm:text-xl font-black text-emerald-800 tracking-tighter truncate" title={formatCurrency(result.entry / result.entryInstallments)}>
+                          {formatCurrency(result.entry / result.entryInstallments)}
+                       </span>
+                    </div>
+                 </div>
              )}
              <p className="text-[8px] text-slate-400 font-medium text-center uppercase mt-3">* Esta é uma simulação preliminar e não garante aprovação de crédito.</p>
              
