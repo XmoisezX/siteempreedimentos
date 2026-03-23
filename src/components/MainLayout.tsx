@@ -21,6 +21,7 @@ export default function MainLayout() {
   // PDF Viewer State
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
+  const [isLoadingPdf, setIsLoadingPdf] = useState(true);
 
   // Recommendations State
   const [simulationData, setSimulationData] = useState<any>(null);
@@ -366,7 +367,10 @@ export default function MainLayout() {
                           <div className="relative group">
                             <div className="absolute -inset-1 bg-gradient-to-r from-imperio-gold-500 to-amber-400 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
                             <button 
-                              onClick={() => setShowPdfViewer(true)}
+                              onClick={() => {
+                                setIsLoadingPdf(true);
+                                setShowPdfViewer(true);
+                              }}
                               className="relative w-full py-4 bg-gradient-to-r from-imperio-gold-500 to-amber-500 hover:from-imperio-gold-600 hover:to-amber-600 text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/20 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
                             >
                               <FileText className="w-5 h-5" />
@@ -452,10 +456,20 @@ export default function MainLayout() {
 
             {/* Iframe Content */}
             <div className={`flex-1 bg-white rounded-2xl overflow-hidden shadow-2xl relative ${isPdfFullscreen ? 'rounded-none border-none' : 'border-4 border-white/10'}`}>
+               {isLoadingPdf && (
+                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                   <Loader2 className="w-10 h-10 animate-spin text-imperio-blue-900 mb-4" />
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center px-6">
+                     Carregando Book...<br />
+                     <span className="text-[9px] font-medium text-slate-400 mt-2 block normal-case">Isso pode levar alguns segundos na primeira exibição devido ao processo de otimização.</span>
+                   </span>
+                 </div>
+               )}
                <iframe 
-                 src={`${selectedProperty.pdf_url}#toolbar=0&zoom=70`} 
-                 className="w-full h-full border-none"
+                 src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}`} 
+                 className={`w-full h-full border-none transition-opacity duration-500 ${isLoadingPdf ? 'opacity-0' : 'opacity-100'}`}
                  title="Property Book"
+                 onLoad={() => setIsLoadingPdf(false)}
                />
                
                {/* Overlay para forçar interações via botões próprios se desejado */}

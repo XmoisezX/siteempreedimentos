@@ -397,13 +397,17 @@ export default function PropertyForm({ onClose, onSuccess, editingProperty }: Pr
                       <input type="file" onChange={e => setImageFile(e.target.files?.[0] || null)} className="hidden" accept="image/*" />
                     </label>
                   </div>
-                  <div className="relative">
+                  <div className="relative flex flex-col">
                     <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase">Book PDF</label>
                     <label className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors h-24">
                       <FileUp className="w-5 h-5 text-slate-400 mb-1" />
                       <span className="text-[10px] font-medium text-slate-500 text-center truncate w-full px-2">{pdfFile ? pdfFile.name : 'Subir PDF'}</span>
                       <input type="file" onChange={e => setPdfFile(e.target.files?.[0] || null)} className="hidden" accept="application/pdf" />
                     </label>
+                    <div className="mt-2 text-[9px] text-slate-500 leading-relaxed bg-amber-50 p-2 rounded-lg border border-amber-100 font-medium">
+                      <strong className="text-amber-700 block mb-0.5">⚠️ Importante:</strong> 
+                      Comprima o PDF no <a href="https://www.ilovepdf.com/pt/comprimir_pdf" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-blue-600 underline font-bold hover:text-blue-800 transition-colors">ILovePDF</a> antes de subir (Ideal: &lt; 5MB).
+                    </div>
                   </div>
                 </div>
               </div>
