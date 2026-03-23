@@ -39,15 +39,14 @@ function MapFlyTo({ hoveredPropertyId, filteredProperties }: { hoveredPropertyId
 function MapResizer() {
   const map = useMap();
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    const container = map.getContainer();
+    const observer = new ResizeObserver(() => {
       map.invalidateSize();
-    }, 250);
-    const handleResize = () => map.invalidateSize();
-    window.addEventListener('resize', handleResize);
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener('resize', handleResize);
-    };
+    });
+    if (container) {
+      observer.observe(container);
+    }
+    return () => observer.disconnect();
   }, [map]);
   return null;
 }
@@ -89,9 +88,9 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
           <div class="absolute -inset-1 ${isListHovered ? mainBg : 'bg-imperio-gold-500'} opacity-${isListHovered ? '30' : opacityClass} rounded-full animate-pulse blur-sm transition-opacity"></div>
           
           <!-- Pin Body -->
-          <div class="${isListHovered ? mainBg : hoverBgClass} text-white px-4 py-2 rounded-xl font-black shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 whitespace-nowrap border-2 border-white/30 uppercase tracking-tight flex flex-col items-center justify-center backdrop-blur-sm min-w-[100px] transition-colors">
-            <span class="max-w-[130px] truncate font-sans text-[9px] opacity-80 leading-none mb-1">${property.name}</span>
-            <span class="font-extrabold text-white tracking-normal text-[12px] leading-none">${priceStr}</span>
+          <div class="${isListHovered ? mainBg : hoverBgClass} text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl font-black shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 border-2 border-white/30 uppercase tracking-tight flex flex-col items-center justify-center backdrop-blur-sm min-w-[90px] max-w-[130px] md:min-w-[100px] md:max-w-none transition-colors text-center whitespace-normal">
+            <span class="w-full font-sans text-[8px] md:text-[9px] opacity-80 leading-tight mb-0.5 md:mb-1 truncate line-clamp-2" style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;">${property.name}</span>
+            <span class="font-extrabold text-white tracking-normal text-[10px] md:text-[12px] leading-none whitespace-nowrap">${priceStr}</span>
           </div>
           
           <!-- Pin Pointer -->

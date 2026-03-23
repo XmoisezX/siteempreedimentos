@@ -246,13 +246,13 @@ export default function MainLayout() {
             <div className="bg-white w-[95vw] md:w-[80vw] lg:w-[850px] lg:h-[850px] max-h-[92vh] rounded-[40px] overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500">
               
               {/* Imagem em Destaque e Recomendações */}
-              <div className="w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex flex-col justify-center items-center shrink-0">
+              <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden ${simulationData ? 'hidden md:flex' : 'flex'}`}>
                 <img src={selectedProperty.image_url} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
                 
                 {/* Recomendações Overlay */}
                 {simulationData && recommendations.length > 0 && (
-                  <div className="relative z-10 w-full max-w-sm p-6 animate-in slide-in-from-bottom-8 fade-in duration-700 flex flex-col">
+                  <div className="hidden md:flex relative z-10 w-full max-w-sm p-6 animate-in slide-in-from-bottom-8 fade-in duration-700 flex-col">
                      <div className="flex items-center space-x-2 mb-6">
                         <Sparkles className="w-6 h-6 text-imperio-gold-500" />
                         <h4 className="text-white font-black uppercase tracking-widest text-sm">Outras Opções para Você</h4>
@@ -401,6 +401,47 @@ export default function MainLayout() {
                     </>
                   )}
                 </div>
+
+                {/* Recomendações Mobile (Abaixo do simulador) */}
+                {simulationData && recommendations.length > 0 && (
+                  <div className="flex md:hidden w-full bg-slate-900 p-6 sm:p-8 animate-in slide-in-from-bottom-8 fade-in duration-700 flex-col shrink-0 pb-12 mt-4 rounded-t-3xl border-t border-white/10">
+                    <div className="flex items-center space-x-2 mb-6">
+                      <Sparkles className="w-6 h-6 text-imperio-gold-500" />
+                      <h4 className="text-white font-black uppercase tracking-widest text-sm">Outras Opções para Você</h4>
+                    </div>
+                    <div className="space-y-4">
+                       {recommendations.map((rec) => (
+                         <div 
+                           key={rec.property.id} 
+                           onClick={() => setSelectedProperty(rec.property)}
+                           className="bg-slate-800/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group"
+                         >
+                            <img src={rec.property.image_url} className="w-16 h-16 rounded-2xl object-cover shadow-lg" alt="Thumb" loading="lazy" decoding="async" />
+                            <div className="flex-1">
+                               <h5 className="text-white text-[11px] font-black uppercase tracking-tight line-clamp-2 leading-tight mb-1">{rec.property.name}</h5>
+                               {rec.property.neighborhood && (
+                                 <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mb-1.5 flex items-center">
+                                   <MapPin className="w-2.5 h-2.5 mr-1 text-imperio-gold-500" />
+                                   {rec.property.neighborhood}
+                                 </p>
+                               )}
+                               <div className="flex flex-col flex-wrap">
+                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex justify-between">
+                                    <span>Parcelas: </span> 
+                                    <strong className="text-white font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(rec.parcel)}</strong>
+                                  </p>
+                                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex justify-between">
+                                    <span>Entrada: </span> 
+                                    <strong className="text-imperio-gold-500 font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(rec.entry)}</strong>
+                                  </p>
+                               </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-white/20" />
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
