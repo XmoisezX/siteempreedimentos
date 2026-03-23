@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Property } from '../data/mockData';
@@ -36,7 +36,32 @@ function MapFlyTo({ hoveredPropertyId, filteredProperties }: { hoveredPropertyId
   return null;
 }
 
+function MapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [map]);
+  return null;
+}
+
 export default function PropertyMap({ hoveredPropertyId, category, properties, onSelect }: PropertyMapProps) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const filteredProperties = useMemo(() => properties.filter((p) => p.type === category), [category, properties]);
 
   const activeHoverId = hoveredPropertyId;
@@ -44,7 +69,10 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
   // Custom Marker HTML showing Name - Re-designed to be more eye-catching
   const createCustomIcon = (property: Property, isListHovered: boolean) => {
     const mainBg = isListHovered ? 'bg-imperio-gold-500' : 'bg-imperio-blue-900';
-    const scale = isListHovered ? 'scale-125 z-[1000]' : 'scale-100 z-10';
+    const scaleClass = isListHovered ? 'scale-125 z-[1000]' : (isMobile ? 'scale-100 z-10' : 'group-hover:scale-125 group-hover:z-[1000] scale-100 z-10');
+    const opacityClass = isMobile ? '0' : '0 group-hover:opacity-30';
+    const hoverBgClass = isMobile ? 'bg-imperio-blue-900' : 'bg-imperio-blue-900 group-hover:bg-imperio-gold-500';
+
     const priceValue = property.valor_imovel_construtora || property.price;
     const priceStr = new Intl.NumberFormat('pt-BR', { 
       style: 'currency', 
@@ -56,18 +84,18 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
     return L.divIcon({
       className: 'custom-leaflet-marker group',
       html: `
-        <div class="relative flex flex-col items-center transition-all duration-300 ${isListHovered ? scale : 'group-hover:scale-125 group-hover:z-[1000] scale-100 z-10'}">
+        <div class="relative flex flex-col items-center transition-all duration-300 ${scaleClass}">
           <!-- Pulse Animation -->
-          <div class="absolute -inset-1 ${isListHovered ? mainBg : 'bg-imperio-gold-500'} opacity-${isListHovered ? '30' : '0 group-hover:opacity-30'} rounded-full animate-pulse blur-sm transition-opacity"></div>
+          <div class="absolute -inset-1 ${isListHovered ? mainBg : 'bg-imperio-gold-500'} opacity-${isListHovered ? '30' : opacityClass} rounded-full animate-pulse blur-sm transition-opacity"></div>
           
           <!-- Pin Body -->
-          <div class="${isListHovered ? mainBg : 'bg-imperio-blue-900 group-hover:bg-imperio-gold-500'} text-white px-4 py-2 rounded-xl font-black shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 whitespace-nowrap border-2 border-white/30 uppercase tracking-tight flex flex-col items-center justify-center backdrop-blur-sm min-w-[100px] transition-colors">
+          <div class="${isListHovered ? mainBg : hoverBgClass} text-white px-4 py-2 rounded-xl font-black shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] mb-1 whitespace-nowrap border-2 border-white/30 uppercase tracking-tight flex flex-col items-center justify-center backdrop-blur-sm min-w-[100px] transition-colors">
             <span class="max-w-[130px] truncate font-sans text-[9px] opacity-80 leading-none mb-1">${property.name}</span>
             <span class="font-extrabold text-white tracking-normal text-[12px] leading-none">${priceStr}</span>
           </div>
           
           <!-- Pin Pointer -->
-          <div class="w-3.5 h-3.5 rotate-45 -mt-3 ${isListHovered ? mainBg : 'bg-imperio-blue-900 group-hover:bg-imperio-gold-500'} border-b-2 border-r-2 border-white/30 shadow-2xl transition-colors"></div>
+          <div class="w-3.5 h-3.5 rotate-45 -mt-3 ${isListHovered ? mainBg : hoverBgClass} border-b-2 border-r-2 border-white/30 shadow-2xl transition-colors"></div>
         </div>
       `,
       iconSize: [140, 75],
@@ -88,6 +116,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
+        <MapResizer />
         <MapFlyTo hoveredPropertyId={hoveredPropertyId} filteredProperties={filteredProperties} />
 
         {filteredProperties.map((property) => {
@@ -104,14 +133,15 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
                 click: () => onSelect(property),
               }}
             >
-              <Tooltip 
-                permanent={false} 
-                direction="top" 
-                offset={[0, -45]} 
-                opacity={1}
-                className="custom-property-tooltip p-0 border-none bg-transparent shadow-none hidden md:block pointer-events-none"
-              >
-                <div className="bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden w-64 transform transition-all duration-300 scale-in-center">
+              {!isMobile && (
+                <Tooltip 
+                  permanent={false} 
+                  direction="top" 
+                  offset={[0, -45]} 
+                  opacity={1}
+                  className="custom-property-tooltip p-0 border-none bg-transparent shadow-none hidden md:block pointer-events-none"
+                >
+                  <div className="bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden w-64 transform transition-all duration-300 scale-in-center">
                   <div className="relative h-32">
                     <img src={property.image_url} className="w-full h-full object-cover" alt={property.name} loading="lazy" decoding="async" />
                     <div className="absolute top-2 right-2 bg-imperio-blue-900 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-lg">
@@ -145,6 +175,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
                   </div>
                 </div>
               </Tooltip>
+              )}
             </Marker>
           );
         })}
