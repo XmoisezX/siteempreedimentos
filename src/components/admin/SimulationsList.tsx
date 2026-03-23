@@ -22,6 +22,7 @@ export default function SimulationsList() {
   const [simulations, setSimulations] = useState<SimulationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchSimulations();
@@ -87,6 +88,16 @@ export default function SimulationsList() {
     return age;
   };
 
+  const filteredSimulations = simulations.filter(sim => {
+    const term = searchTerm.toLowerCase();
+    return (
+      sim.name.toLowerCase().includes(term) ||
+      sim.phone.includes(term) ||
+      (sim.properties?.name || '').toLowerCase().includes(term) ||
+      (sim.broker_name || '').toLowerCase().includes(term)
+    );
+  });
+
   if (loading) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 space-y-4">
@@ -98,17 +109,26 @@ export default function SimulationsList() {
 
   return (
     <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+      <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/50 gap-4">
         <div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight">Leads & Simulações</h2>
           <p className="text-sm text-slate-500 font-medium">Contatos captados através do simulador de financiamento.</p>
         </div>
-        <div className="bg-imperio-blue-900/10 text-imperio-blue-900 px-4 py-2 rounded-xl font-bold text-sm">
-          {simulations.length} {simulations.length === 1 ? 'Lead' : 'Leads'}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <input 
+             type="text" 
+             placeholder="Buscar lead, imóvel, corretor..." 
+             className="px-4 py-2 rounded-xl border border-slate-200 text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-imperio-blue-900/20 transition-all font-medium text-slate-700 placeholder-slate-400"
+             value={searchTerm}
+             onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <div className="bg-imperio-blue-900/10 text-imperio-blue-900 px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap hidden sm:block">
+            {filteredSimulations.length} {filteredSimulations.length === 1 ? 'Lead' : 'Leads'}
+          </div>
         </div>
       </div>
 
-      {simulations.length === 0 ? (
+      {filteredSimulations.length === 0 ? (
         <div className="p-12 text-center flex flex-col items-center justify-center">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
             <User className="w-8 h-8 text-slate-300" />
@@ -132,7 +152,7 @@ export default function SimulationsList() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-slate-50">
-              {simulations.map((sim) => (
+              {filteredSimulations.map((sim) => (
                 <tr key={sim.id} className="hover:bg-slate-50/50 transition-colors group">
                   <td className="p-4 pl-6">
                     <div className="flex items-center space-x-3">

@@ -603,9 +603,9 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                       <span className="text-xs font-black text-emerald-700 italic border border-emerald-200/50 bg-white rounded-[8px] px-2.5 py-1 shadow-sm shrink-0 whitespace-nowrap ml-2">Até {result.entryInstallments}x</span>
                     </div>
                     
-                    <div className="bg-white border border-emerald-100 rounded-[10px] p-3 flex justify-between items-center relative z-10 shadow-[0_2px_10px_rgba(16,185,129,0.05)]">
-                       <span className="text-[8px] sm:text-[9px] font-bold text-emerald-700 uppercase tracking-[0.15em] shrink-0 mr-2">Parcela Mensal Estimada</span>
-                       <span className="text-lg sm:text-xl font-black text-emerald-800 tracking-tighter truncate" title={formatCurrency(result.entry / result.entryInstallments)}>
+                    <div className="bg-white border border-emerald-100 rounded-[10px] p-2.5 sm:p-3 flex flex-col sm:flex-row justify-between sm:items-center relative z-10 shadow-[0_2px_10px_rgba(16,185,129,0.05)] gap-1">
+                       <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest leading-tight">Parcela Mensal Estimada</span>
+                       <span className="text-xl sm:text-2xl font-black text-emerald-800 tracking-tighter" title={formatCurrency(result.entry / result.entryInstallments)}>
                           {formatCurrency(result.entry / result.entryInstallments)}
                        </span>
                     </div>
