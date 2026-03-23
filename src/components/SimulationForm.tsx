@@ -21,6 +21,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     income: 5000,
     birthDate: '',
     hasDependentOrSecondBuyer: false,
+    has3YearsFGTS: false,
   });
 
   const [result, setResult] = useState<null | {
@@ -123,6 +124,10 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       else if (faixa === "Faixa 4") iAnnual = 0.1047;
       else iAnnual = 0.1149; // SBPE Tradicional
       
+      if (formData.has3YearsFGTS) {
+        iAnnual = iAnnual - 0.005; // -0.5% reduction
+      }
+
       const iMonthly = iAnnual / 12;
 
       // SUBSIDIO FEDERAL MCMV
@@ -212,6 +217,7 @@ PERFIL DO CLIENTE:
 - Renda Familiar: ${formatCurrency(income)}
 - Data Nasc: ${formData.birthDate} (Idade: ${age} anos)
 - Dependente/2º Comprador: ${formData.hasDependentOrSecondBuyer ? 'Sim' : 'Não'}
+- 3 Anos de FGTS: ${formData.has3YearsFGTS ? 'Sim (-0.5% a.a.)' : 'Não'}
 
 PARÂMETROS DE FINANCIAMENTO:
 - Prazo Máximo Real: ${term} meses (Regra: min(420, (80 - ${age}) * 12))
@@ -440,18 +446,41 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex items-center">
-                     <label className="flex items-center space-x-3 cursor-pointer group w-full">
+                  <div className="flex flex-col space-y-3 w-full">
+                    <label className="flex items-center space-x-3 cursor-pointer group w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-imperio-blue-900/30 transition-all">
+                      <div className="relative flex items-center justify-center mt-0.5">
                         <input 
                           type="checkbox" 
                           checked={formData.hasDependentOrSecondBuyer}
                           onChange={e => setFormData({ ...formData, hasDependentOrSecondBuyer: e.target.checked })}
-                          className="w-5 h-5 rounded-lg border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900/20"
+                          className="peer sr-only"
                         />
-                        <div className="flex flex-col">
-                          <span className="text-[12px] font-black text-slate-700 uppercase tracking-widest">Possui 3 anos de FGTS, Dependente ou 2º Comprador</span>
+                        <div className="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-imperio-gold-500 peer-checked:border-imperio-gold-500 transition-all flex items-center justify-center">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100" />
                         </div>
-                     </label>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[12px] font-black text-slate-700 uppercase tracking-widest leading-tight">Possui Dependente ou 2º Comprador</span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center space-x-3 cursor-pointer group w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-imperio-blue-900/30 transition-all">
+                      <div className="relative flex items-center justify-center mt-0.5">
+                        <input 
+                          type="checkbox" 
+                          checked={formData.has3YearsFGTS}
+                          onChange={e => setFormData({ ...formData, has3YearsFGTS: e.target.checked })}
+                          className="peer sr-only"
+                        />
+                        <div className="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-imperio-gold-500 peer-checked:border-imperio-gold-500 transition-all flex items-center justify-center">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100" />
+                        </div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[12px] font-black text-slate-700 uppercase tracking-widest leading-tight">Mínimo de 3 Anos Acumulados no FGTS</span>
+                        <span className="text-[10px] text-slate-500 font-medium">Marcando esta opção, você garante taxas de juros menores.</span>
+                      </div>
+                    </label>
                   </div>
                 </div>
               </div>
