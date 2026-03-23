@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Sparkles, Building2, Phone, UserCircle2, Download } from 'lucide-react';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
-import { getRotatedBrokerPhone } from '../lib/brokers';
+import { getRotatedBroker } from '../lib/brokers';
 
 interface SimulationFormProps {
   property?: Property;
@@ -38,7 +38,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     entryInstallments?: number;
     debugLog?: string;
   }>(null);
-  const [assignedBrokerPhone, setAssignedBrokerPhone] = useState('5553994445566');
+  const [assignedBroker, setAssignedBroker] = useState<{ phone: string, name: string }>({ phone: '5553994445566', name: 'Atendimento Central' });
 
   useEffect(() => {
     if (!initialProperty) {
@@ -50,12 +50,6 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     const { data } = await supabase.from('properties').select('*').order('name');
     if (data) setProperties(data);
   }
-
-  useEffect(() => {
-    if (result && !loading) {
-      getRotatedBrokerPhone().then(phone => setAssignedBrokerPhone(phone));
-    }
-  }, [result, loading]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { 
@@ -98,7 +92,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     
     setLoading(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const evaluationValue = selectedProperty.valor_avaliacao_caixa || 200000; // Fallback
       const income = formData.income;
       const age = calculateAge(formData.birthDate);
@@ -264,6 +258,9 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         debugLog: debugLog
       });
 
+      const broker = await getRotatedBroker();
+      setAssignedBroker(broker);
+
       // Salvar simulação e Lead no banco de dados
       supabase.from('simulations').insert([{
         property_id: selectedProperty.id,
@@ -272,7 +269,8 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         income: income,
         birth_date: formData.birthDate,
         dependents: formData.hasDependentOrSecondBuyer ? 1 : 0,
-        has_second_buyer: formData.hasDependentOrSecondBuyer
+        has_second_buyer: formData.hasDependentOrSecondBuyer,
+        broker_name: broker.name
       }]).then(({ error }) => {
         if (error) console.error("Erro ao salvar simulação:", error);
       });
@@ -295,7 +293,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
     Gostaria de falar com um especialista.`
   );
   
-  const whatsappLink = `https://wa.me/${assignedBrokerPhone}?text=${ctaMessage}`;
+  const whatsappLink = `https://wa.me/${assignedBroker.phone}?text=${ctaMessage}`;
 
   return (
     <div className="bg-white rounded-3xl relative h-auto flex flex-col p-2">

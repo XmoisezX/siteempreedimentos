@@ -1,4 +1,4 @@
-import { getRotatedBrokerPhone } from '../lib/brokers';
+import { getRotatedBroker } from '../lib/brokers';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -9,8 +9,8 @@ export default function WhatsAppButton() {
   async function handleWhatsAppClick() {
     setLoading(true);
     try {
-      const brokerPhone = await getRotatedBrokerPhone();
-      const whatsappLink = `https://wa.me/${brokerPhone}?text=${message}`;
+      const broker = await getRotatedBroker();
+      const whatsappLink = `https://wa.me/${broker.phone}?text=${message}`;
       window.open(whatsappLink, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error in WhatsApp rotation:', error);

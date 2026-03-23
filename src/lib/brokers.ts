@@ -10,11 +10,11 @@ export interface Broker {
 
 /**
  * Fetches the next broker in the rotation, updates their last_assigned_at timestamp,
- * and returns their phone number.
+ * and returns their phone number and name.
  * 
  * Logic: Circular rotation (Round Robin) based on the oldest last_assigned_at among active brokers.
  */
-export async function getRotatedBrokerPhone(): Promise<string> {
+export async function getRotatedBroker(): Promise<{ phone: string, name: string }> {
   try {
     // 1. Fetch all active brokers
     const { data: brokers, error } = await supabase
@@ -25,12 +25,12 @@ export async function getRotatedBrokerPhone(): Promise<string> {
 
     if (error) {
       console.error('Error fetching brokers for rotation:', error);
-      return '5553994445566'; // Fallback to original main number
+      return { phone: '5553994445566', name: 'Atendimento Central' }; // Fallback to original main number
     }
 
     if (!brokers || brokers.length === 0) {
       console.warn('No active brokers found for rotation.');
-      return '5553994445566'; // Fallback
+      return { phone: '5553994445566', name: 'Atendimento Central' }; // Fallback
     }
 
     // 2. The first broker in the sorted list is the one who hasn't received a lead for the longest time
@@ -44,9 +44,9 @@ export async function getRotatedBrokerPhone(): Promise<string> {
       .update({ last_assigned_at: new Date().toISOString() })
       .eq('id', nextBroker.id);
 
-    return nextBroker.phone;
+    return { phone: nextBroker.phone, name: nextBroker.name };
   } catch (err) {
     console.error('Unexpected error in lead rotation:', err);
-    return '5553994445566'; // Fallback
+    return { phone: '5553994445566', name: 'Atendimento Central' }; // Fallback
   }
 }

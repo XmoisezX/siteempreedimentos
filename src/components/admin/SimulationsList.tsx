@@ -12,6 +12,7 @@ interface SimulationData {
   has_second_buyer: boolean;
   created_at: string;
   property_id: string;
+  broker_name?: string;
   properties: {
     name: string;
   };
@@ -74,6 +75,18 @@ export default function SimulationsList() {
     });
   };
 
+  const calculateAge = (birthDate: string) => {
+    if (!birthDate) return '?';
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   if (loading) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 space-y-4">
@@ -109,8 +122,10 @@ export default function SimulationsList() {
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-100 text-[10px] uppercase font-black tracking-widest text-slate-400">
                 <th className="p-4 pl-6 font-medium">Cliente</th>
+                <th className="p-4 font-medium">Nascimento</th>
                 <th className="p-4 font-medium">Contato</th>
                 <th className="p-4 font-medium">Empreendimento</th>
+                <th className="p-4 font-medium">Corretor(a)</th>
                 <th className="p-4 font-medium">Renda Familiar</th>
                 <th className="p-4 font-medium">Data Simulação</th>
                 <th className="p-4 pr-6 text-right font-medium">Ação</th>
@@ -137,6 +152,18 @@ export default function SimulationsList() {
                     </div>
                   </td>
                   <td className="p-4">
+                    <div className="flex flex-col">
+                      <span className="text-slate-700 font-bold whitespace-nowrap text-[11px]">
+                        {sim.birth_date ? new Date(sim.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/D'}
+                      </span>
+                      {sim.birth_date && (
+                        <span className="text-[9px] text-slate-400 font-medium">
+                          {calculateAge(sim.birth_date)} anos
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-4">
                     <div className="flex items-center space-x-2 text-slate-600 font-medium whitespace-nowrap">
                       <Phone className="w-3.5 h-3.5 text-slate-400" />
                       <a href={`https://wa.me/55${sim.phone.replace(/\D/g, '')}`} target="_blank" className="hover:text-emerald-500 transition-colors">
@@ -151,6 +178,11 @@ export default function SimulationsList() {
                           {sim.properties?.name || 'Imóvel Excluído'}
                         </span>
                      </div>
+                  </td>
+                  <td className="p-4">
+                    <span className="text-slate-600 font-bold whitespace-nowrap text-[11px] uppercase tracking-wider bg-slate-100 px-2.5 py-1 rounded-md">
+                      {sim.broker_name || 'Ag. Geral'}
+                    </span>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center space-x-1.5 font-black text-slate-700">
