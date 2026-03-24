@@ -116,19 +116,28 @@ export default function SimulationForm({ property: initialProperty, onSimulation
         faixa = "Financiamento Tradicional";
       }
 
-      // TAXA DE JUROS EFETIVOS A.A
-      let iAnnual = 0.0847; // Default Faixa 3
-      if (faixa === "Faixa 1") iAnnual = 0.0485;
-      else if (faixa === "Faixa 2") iAnnual = 0.0564;
-      else if (faixa === "Faixa 3") iAnnual = 0.0847;
-      else if (faixa === "Faixa 4") iAnnual = 0.1047;
-      else iAnnual = 0.1149; // SBPE Tradicional
+      // TAXA DE JUROS NOMINAIS A.A (Caixa usa a taxa nominal para cálculo do PMT)
+      let iNominal = 0.0816; // Default Faixa 3 (aprox 8.47% efetivo)
+      if (faixa === "Faixa 1") {
+        iNominal = 0.0475; // a.a nominal (aprox 4.85% efetivo)
+      } else if (faixa === "Faixa 2") {
+        if (income <= 3200) iNominal = 0.0550; // a.a nominal (aprox 5.64% efetivo)
+        else if (income <= 3800) iNominal = 0.0650; // a.a nominal (aprox 6.70% efetivo)
+        else iNominal = 0.0700; // a.a nominal (aprox 7.23% efetivo) para 3.801 até 4.700
+      } else if (faixa === "Faixa 3") {
+        iNominal = 0.0816; // a.a nominal
+      } else if (faixa === "Faixa 4") {
+        iNominal = 0.0999;
+      } else {
+        iNominal = 0.1099; // SBPE Tradicional
+      }
       
       if (formData.has3YearsFGTS) {
-        iAnnual = iAnnual - 0.005; // -0.5% reduction
+        iNominal = iNominal - 0.005; // -0.5% reduction
       }
 
-      const iMonthly = iAnnual / 12;
+      const iMonthly = iNominal / 12;
+      const iAnnual = Math.pow(1 + iMonthly, 12) - 1; // Para o log exibir a taxa efetiva real
 
       // SUBSIDIO FEDERAL MCMV
       let projFederalSubsidy = 0;
@@ -149,7 +158,9 @@ export default function SimulationForm({ property: initialProperty, onSimulation
             else if (income <= 2800) projFederalSubsidy = 12916;
             else if (income <= 2900) projFederalSubsidy = 10724;
             else if (income <= 3000) projFederalSubsidy = 8592;
-            else projFederalSubsidy = 0; // Acima de 3000 o subsídio base zera (simplificação)
+            else if (income <= 3100) projFederalSubsidy = 4500;
+            else if (income <= 3200) projFederalSubsidy = 1575;
+            else projFederalSubsidy = 0; // Acima de 3200 o subsídio base zera (simplificação)
             
             displayFederalSubsidyRange = "R$ " + projFederalSubsidy.toLocaleString('pt-BR');
         } else {
@@ -166,6 +177,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
             else if (income <= 2800) projFederalSubsidy = 3250;
             else if (income <= 2900) projFederalSubsidy = 2800;
             else if (income <= 3000) projFederalSubsidy = 2577;
+            else if (income <= 3100) projFederalSubsidy = 1500;
             else projFederalSubsidy = 0;
             
             displayFederalSubsidyRange = "R$ " + projFederalSubsidy.toLocaleString('pt-BR');
@@ -179,18 +191,27 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       let financedAmount = subsidizedEvaluation * 0.80;
       const maxInstallment = income * 0.30;
 
+      // Estimativa Rápida de Seguros (MIP/DFI) e Taxas Administrativas Caixa
+      // Fundamental para que a parcela gerada não estoure os 30% na Caixa
+      const calculateInsuranceAndFees = (financed: number, evalValue: number) => {
+        // Taxa de Admnistração fixa (~R$ 25) + Seguros baseados no valor do imóvel e valor financiado
+        return 25 + (evalValue * 0.00013) + (financed * 0.00008); 
+      };
+
       // Cálculo PMT (Sistema PRICE)
       // PMT = PV * ( i * (1 + i)^n ) / ( (1 + i)^n - 1 )
       const calculatePMT = (pv: number, i: number, n: number) => {
         return pv * ( (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1) );
       };
 
-      let currentParcel = calculatePMT(financedAmount, iMonthly, term);
+      let purePMT = calculatePMT(financedAmount, iMonthly, term);
+      let currentParcel = purePMT + calculateInsuranceAndFees(financedAmount, subsidizedEvaluation);
 
       // AJUSTE AUTOMÁTICO DA ENTRADA
       while (currentParcel > maxInstallment && financedAmount > 0) {
-        financedAmount -= (evaluationValue * 0.01);
-        currentParcel = calculatePMT(financedAmount, iMonthly, term);
+        financedAmount -= 50; // Passos menores (50) para maior precisão (reduz excesso de recusa)
+        purePMT = calculatePMT(financedAmount, iMonthly, term);
+        currentParcel = purePMT + calculateInsuranceAndFees(financedAmount, subsidizedEvaluation);
       }
 
       const propertyValue = selectedProperty.valor_imovel_construtora || evaluationValue;
@@ -222,7 +243,7 @@ PERFIL DO CLIENTE:
 PARÂMETROS DE FINANCIAMENTO:
 - Prazo Máximo Real: ${term} meses (Regra: min(420, (80 - ${age}) * 12))
 - Comprometimento de Renda Máximo (30%): ${formatCurrency(maxInstallment)}
-- Taxa de Juros (${(iAnnual * 100).toFixed(2)}% a.a.): ${(iMonthly * 100).toFixed(4)}% a.m.
+- Taxa de Juros (${(iAnnual * 100).toFixed(2)}% a.a. ef.): ${(iMonthly * 100).toFixed(4)}% a.m.
 
 CÁLCULO DO PLANO:
 1. Valor do Imóvel (Base Construtora): ${formatCurrency(propertyValue)}
@@ -230,7 +251,7 @@ CÁLCULO DO PLANO:
 2. Avaliação Liquida (Caixa - Subsídio): ${formatCurrency(subsidizedEvaluation)}
 3. Financiamento Máximo Perm. (80% da Av. Líquida): ${formatCurrency(subsidizedEvaluation * 0.8)}
 4. Financiamento Final Aprovado: ${formatCurrency(financedAmount)} (Ajustado p/ renda)
-5. Parcela Mensal (Sistema PRICE): ${formatCurrency(currentParcel)}
+5. Parcela Mensal (Sistema PRICE c/ Taxas): ${formatCurrency(currentParcel)}
 6. Diferença Pré-Porta de Entrada: ${formatCurrency(calculatedEntry)}
 
 SUBSÍDIO GOVERNO DO ESTADO (PORTA DE ENTRADA):
