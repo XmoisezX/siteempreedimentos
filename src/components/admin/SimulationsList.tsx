@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Loader2, Trash2, Calendar, Phone, User, DollarSign, Building2 } from 'lucide-react';
+import { Loader2, Trash2, Calendar, Phone, User, DollarSign, Building2, Download, X as CloseIcon, Calculator, ChevronDown } from 'lucide-react';
 
 interface SimulationData {
   id: string;
@@ -13,9 +13,7 @@ interface SimulationData {
   created_at: string;
   property_id: string;
   broker_name?: string;
-  properties: {
-    name: string;
-  };
+  properties: any;
 }
 
 export default function SimulationsList() {
@@ -24,20 +22,22 @@ export default function SimulationsList() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [viewingSim, setViewingSim] = useState<SimulationData | null>(null);
+  const [brokers, setBrokers] = useState<{name: string}[]>([]);
+
   useEffect(() => {
     fetchSimulations();
+    supabase.from('brokers').select('name').order('name').then(({data}) => setBrokers(data || []));
   }, []);
 
   async function fetchSimulations() {
     setLoading(true);
-    // Join com properties para pegar o nome do imóvel
     const { data, error } = await supabase
       .from('simulations')
       .select(`
         *,
-        properties (
-          name
-        )
+        properties (*)
       `)
       .order('created_at', { ascending: false });
 
@@ -45,6 +45,7 @@ export default function SimulationsList() {
       console.error('Error fetching simulations:', error);
     } else {
       setSimulations(data || []);
+      setSelectedLeads([]);
     }
     setLoading(false);
   }
@@ -88,6 +89,173 @@ export default function SimulationsList() {
     return age;
   };
 
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) setSelectedLeads(filteredSimulations.map(s => s.id));
+    else setSelectedLeads([]);
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    if (checked) setSelectedLeads(prev => [...prev, id]);
+    else setSelectedLeads(prev => prev.filter(l => l !== id));
+  };
+
+  const exportCSV = () => {
+    const data = filteredSimulations.filter(s => selectedLeads.includes(s.id));
+    let csv = "Cliente,Telefone,Data Nascimento,Dependentes,Composicao Renda,Renda,Corretor,Empreendimento,Data Solicitacao\n";
+    data.forEach(s => {
+      const bdate = new Date(s.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+      csv += `"${s.name}","${s.phone}",${bdate},${s.dependents},${s.has_second_buyer?'Sim':'Nao'},${s.income},"${s.broker_name||'Ag. Geral'}","${s.properties?.name||'N/D'}",${formatDate(s.created_at)}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `imperio_leads_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const bulkDelete = async () => {
+    if (!window.confirm(`Excluir DEFINITIVAMENTE ${selectedLeads.length} leads selecionados?`)) return;
+    const { error } = await supabase.from('simulations').delete().in('id', selectedLeads);
+    if (!error) {
+      fetchSimulations();
+    } else alert('Erro: ' + error.message);
+  };
+
+  const bulkChangeBroker = async (brokerName: string) => {
+    if (!window.confirm(`Atribuir ${selectedLeads.length} leads para ${brokerName}?`)) return;
+    const { error } = await supabase.from('simulations').update({ broker_name: brokerName }).in('id', selectedLeads);
+    if (!error) {
+      fetchSimulations();
+    } else alert('Erro: ' + error.message);
+  };
+
+  const generateSimLog = (sim: SimulationData) => {
+    const property = sim.properties;
+    if (!property) return "Imóvel não encontrado ou excluído do sistema.";
+    
+    const evaluationValue = property.valor_avaliacao_caixa || 200000;
+    const income = sim.income;
+    const age = calculateAge(sim.birth_date) as number;
+    const term = Math.min(420, (80 - age) * 12);
+
+    let program = "Minha Casa Minha Vida";
+    let faixa = "";
+    if (income <= 2850) faixa = "Faixa 1";
+    else if (income <= 4700) faixa = "Faixa 2";
+    else if (income <= 8600) faixa = "Faixa 3";
+    else if (income <= 12000) faixa = "Faixa 4";
+    else { program = "SBPE"; faixa = "Financiamento Tradicional"; }
+
+    let iNominal = 0.0816;
+    if (faixa === "Faixa 1") iNominal = 0.0475;
+    else if (faixa === "Faixa 2") iNominal = income <= 3200 ? 0.0550 : income <= 3800 ? 0.0650 : 0.0700;
+    else if (faixa === "Faixa 3") iNominal = 0.0816;
+    else if (faixa === "Faixa 4") iNominal = 0.0999;
+    else iNominal = 0.1099;
+    
+    const iMonthly = iNominal / 12;
+    const iAnnual = Math.pow(1 + iMonthly, 12) - 1;
+
+    let projFederalSubsidy = 0;
+    if (program === "Minha Casa Minha Vida") {
+        if (sim.has_second_buyer) {
+            if (income <= 1800) projFederalSubsidy = 55000;
+            else if (income <= 1900) projFederalSubsidy = 50159;
+            else if (income <= 2000) projFederalSubsidy = 44477;
+            else if (income <= 2100) projFederalSubsidy = 39201;
+            else if (income <= 2200) projFederalSubsidy = 34594;
+            else if (income <= 2300) projFederalSubsidy = 30077;
+            else if (income <= 2400) projFederalSubsidy = 25933;
+            else if (income <= 2500) projFederalSubsidy = 22155;
+            else if (income <= 2600) projFederalSubsidy = 18733;
+            else if (income <= 2700) projFederalSubsidy = 15657;
+            else if (income <= 2800) projFederalSubsidy = 12916;
+            else if (income <= 2900) projFederalSubsidy = 10724;
+            else if (income <= 3000) projFederalSubsidy = 8592;
+            else if (income <= 3100) projFederalSubsidy = 4500;
+            else if (income <= 3200) projFederalSubsidy = 1575;
+        } else {
+            if (income <= 1800) projFederalSubsidy = 16500;
+            else if (income <= 1900) projFederalSubsidy = 15047;
+            else if (income <= 2000) projFederalSubsidy = 13343;
+            else if (income <= 2100) projFederalSubsidy = 11760;
+            else if (income <= 2200) projFederalSubsidy = 10378;
+            else if (income <= 2300) projFederalSubsidy = 9023;
+            else if (income <= 2400) projFederalSubsidy = 7780;
+            else if (income <= 2500) projFederalSubsidy = 6400;
+            else if (income <= 2600) projFederalSubsidy = 5100;
+            else if (income <= 2700) projFederalSubsidy = 4095;
+            else if (income <= 2800) projFederalSubsidy = 3250;
+            else if (income <= 2900) projFederalSubsidy = 2800;
+            else if (income <= 3000) projFederalSubsidy = 2577;
+            else if (income <= 3100) projFederalSubsidy = 1500;
+        }
+    }
+
+    const subsidizedEvaluation = evaluationValue - projFederalSubsidy;
+    let financedAmount = subsidizedEvaluation * 0.80;
+    const maxInstallment = income * 0.30;
+    
+    const calcFees = (f: number, ev: number) => 25 + (ev * 0.00013) + (f * 0.00008);
+    const calcPMT = (pv: number, i: number, n: number) => pv * ((i * Math.pow(1+i,n))/(Math.pow(1+i,n)-1));
+    
+    let purePMT = calcPMT(financedAmount, iMonthly, term);
+    let currentParcel = purePMT + calcFees(financedAmount, subsidizedEvaluation);
+
+    while (currentParcel > maxInstallment && financedAmount > 0) {
+      financedAmount -= 50;
+      purePMT = calcPMT(financedAmount, iMonthly, term);
+      currentParcel = purePMT + calcFees(financedAmount, subsidizedEvaluation);
+    }
+
+    const propertyValue = property.valor_imovel_construtora || evaluationValue;
+    const calculatedEntry = (propertyValue - projFederalSubsidy) - financedAmount;
+    const subsidy = (income <= 1518 * 5 && evaluationValue <= 320000 && property.porta_de_entrada !== false) ? 20000 : 0;
+    const finalEntry = Math.max(0, calculatedEntry - subsidy);
+
+    return `DEMONSTRATIVO DE CÁLCULO - SIMULADOR CAIXA
+-------------------------------------------
+Empreendimento: ${property.name}
+Valor de Avaliação (Caixa): ${formatCurrency(evaluationValue)}
+Valor do Imovel (Construtora): ${formatCurrency(propertyValue)}
+
+PERFIL DO CLIENTE:
+- Cliente: ${sim.name}
+- Telefone: ${sim.phone}
+- Renda Familiar: ${formatCurrency(income)}
+- Data Nasc: ${new Date(sim.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} (Idade: ${age} anos)
+- Dependente/2º Comprador: ${sim.has_second_buyer ? 'Sim' : 'Não'}
+
+PARÂMETROS DE FINANCIAMENTO:
+- Prazo Máximo Real: ${term} meses (Regra: min(420, (80 - ${age}) * 12))
+- Comprometimento Máx. (30%): ${formatCurrency(maxInstallment)}
+- Taxa de Juros (${(iAnnual * 100).toFixed(2)}% a.a. ef.): ${(iMonthly * 100).toFixed(4)}% a.m.
+
+CÁLCULO DO PLANO:
+1. Valor do Imóvel (Construtora): ${formatCurrency(propertyValue)}
+2. Subsídio Federal (MCMV): ${projFederalSubsidy > 0 ? formatCurrency(projFederalSubsidy) : 'R$ 0,00'}
+2. Avaliação Liquida (Caixa - Subsídio): ${formatCurrency(subsidizedEvaluation)}
+3. Financiamento Máximo Perm. (80% da Av.): ${formatCurrency(subsidizedEvaluation * 0.8)}
+4. Financiamento Final Aprovado: ${formatCurrency(financedAmount)}
+5. Parcela Mensal (Sistema PRICE c/ Taxas): ${formatCurrency(currentParcel)}
+6. Diferença Pré-Porta de Entrada: ${formatCurrency(calculatedEntry)}
+
+SUBSÍDIO GOVERNO DO ESTADO (PORTA DE ENTRADA):
+- Elegível ao Subsídio: ${subsidy > 0 ? 'SIM' : 'NÃO'}
+- Valor do Subsídio Estadual: ${formatCurrency(subsidy)}
+
+RESULTADO FINAL:
+- Entrada Final a pagar: ${formatCurrency(finalEntry)}
+- Valor Financiado: ${formatCurrency(financedAmount)}
+- Parcela Mensal: ${formatCurrency(currentParcel)}
+-------------------------------------------
+Gerado em tempo real pelo Admin.
+`;
+  };
+
   const filteredSimulations = simulations.filter(sim => {
     const term = searchTerm.toLowerCase();
     return (
@@ -128,6 +296,60 @@ export default function SimulationsList() {
         </div>
       </div>
 
+      {viewingSim && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-imperio-blue-900 rounded-xl flex items-center justify-center">
+                  <Calculator className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 uppercase">Demonstrativo da Simulação</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lead: {viewingSim.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setViewingSim(null)} className="p-2 bg-white text-slate-400 hover:text-red-500 rounded-lg shadow-sm">
+                <CloseIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 bg-slate-900 overflow-y-auto">
+              <pre className="text-[10px] sm:text-xs font-mono text-emerald-400 whitespace-pre-wrap leading-relaxed">
+                {generateSimLog(viewingSim)}
+              </pre>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedLeads.length > 0 && (
+        <div className="bg-imperio-blue-900 p-4 shrink-0 flex flex-col sm:flex-row items-center justify-between shadow-2xl fixed bottom-8 left-1/2 -translate-x-1/2 w-[95%] md:w-auto md:min-w-[700px] z-40 rounded-2xl border border-white/10 animate-in slide-in-from-bottom-8">
+           <span className="text-white font-black text-xs uppercase tracking-widest mb-3 sm:mb-0 bg-white/10 px-4 py-2 rounded-xl">
+             {selectedLeads.length} selecionado(s)
+           </span>
+           <div className="flex flex-wrap gap-2 items-center">
+              <button onClick={exportCSV} className="text-[10px] uppercase tracking-widest font-black text-slate-900 bg-white hover:bg-slate-100 px-4 py-2.5 rounded-xl flex items-center transition-all"><Download className="w-3.5 h-3.5 mr-2"/> CSV</button>
+              
+              <div className="relative">
+                <select 
+                  onChange={(e) => { if (e.target.value) bulkChangeBroker(e.target.value) }} 
+                  className="text-[10px] uppercase tracking-widest font-black text-slate-600 bg-white hover:bg-slate-100 pl-4 pr-10 py-2.5 rounded-xl cursor-pointer outline-none appearance-none transition-all"
+                  value=""
+                >
+                  <option value="" disabled>ATRIBUIR CORRETOR...</option>
+                  {brokers.map(b => (
+                    <option key={b.name} value={b.name}>{b.name}</option>
+                  ))}
+                  <option value="Ag. Geral">AGÊNCIA GERAL</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+
+              <button onClick={bulkDelete} className="text-[10px] uppercase tracking-widest font-black text-white bg-red-500 hover:bg-red-600 px-4 py-2.5 rounded-xl flex items-center sm:ml-4 shadow-lg shadow-red-500/20 transition-all"><Trash2 className="w-3.5 h-3.5 mr-2"/> Excluir</button>
+           </div>
+        </div>
+      )}
+
       {filteredSimulations.length === 0 ? (
         <div className="p-12 text-center flex flex-col items-center justify-center">
           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
@@ -141,7 +363,15 @@ export default function SimulationsList() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-100 text-[10px] uppercase font-black tracking-widest text-slate-400">
-                <th className="p-4 pl-6 font-medium">Cliente</th>
+                <th className="p-4 pl-6 w-10">
+                  <input 
+                    type="checkbox" 
+                    onChange={handleSelectAll} 
+                    checked={selectedLeads.length > 0 && selectedLeads.length === filteredSimulations.length} 
+                    className="rounded border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900 w-4 h-4" 
+                  />
+                </th>
+                <th className="p-4 font-medium">Cliente</th>
                 <th className="p-4 font-medium">Nascimento</th>
                 <th className="p-4 font-medium">Contato</th>
                 <th className="p-4 font-medium">Empreendimento</th>
@@ -153,8 +383,16 @@ export default function SimulationsList() {
             </thead>
             <tbody className="text-sm divide-y divide-slate-50">
               {filteredSimulations.map((sim) => (
-                <tr key={sim.id} className="hover:bg-slate-50/50 transition-colors group">
+                <tr key={sim.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedLeads.includes(sim.id) ? 'bg-imperio-blue-900/5' : ''}`}>
                   <td className="p-4 pl-6">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedLeads.includes(sim.id)} 
+                      onChange={(e) => handleSelectOne(sim.id, e.target.checked)} 
+                      className="rounded border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900 w-4 h-4" 
+                    />
+                  </td>
+                  <td className="p-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-imperio-gold-500/10 flex items-center justify-center shrink-0">
                         <span className="text-imperio-gold-600 font-black text-xs">
@@ -216,7 +454,14 @@ export default function SimulationsList() {
                       <span>{formatDate(sim.created_at)}</span>
                     </div>
                   </td>
-                  <td className="p-4 pr-6 text-right">
+                  <td className="p-4 pr-6 text-right flex items-center justify-end space-x-1">
+                    <button 
+                      onClick={() => setViewingSim(sim)}
+                      className="p-2 text-slate-400 hover:text-imperio-blue-900 hover:bg-slate-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      title="Ver Demonstrativo da Simulação"
+                    >
+                      <Calculator className="w-4 h-4" />
+                    </button>
                     <button 
                       onClick={() => handleDelete(sim.id)}
                       disabled={deleting === sim.id}

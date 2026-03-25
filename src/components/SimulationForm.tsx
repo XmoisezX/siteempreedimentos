@@ -340,6 +340,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   
   const whatsappLink = `https://wa.me/${assignedBroker.phone}?text=${ctaMessage}`;
 
+  const isNameValid = !formData.name || (formData.name.trim().split(/\s+/).length >= 2 && !/(.)\1{2,}/i.test(formData.name) && !/[0-9]/.test(formData.name));
+  const rawPhone = formData.phone.replace(/\D/g, '');
+  const isValidPhone = !formData.phone || (rawPhone.length === 11 && !/(.)\1{4,}/.test(rawPhone) && Number(rawPhone.substring(0,2)) >= 11);
+  const isAdult = !formData.birthDate || formData.birthDate.length < 10 || calculateAge(formData.birthDate) >= 18;
+
   return (
     <div className="bg-white rounded-3xl relative h-auto flex flex-col p-2">
       {/* Header do Simulador */}
@@ -388,6 +393,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                       className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-imperio-blue-900/10 transition-all"
                       required
                     />
+                    {formData.name.length > 0 && !isNameValid && (
+                      <span className="text-[10px] text-red-500 font-bold block mt-2">
+                        Insira nome e sobrenome válidos, sem números ou letras repetidas.
+                      </span>
+                    )}
                   </div>
 
                   <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
@@ -403,6 +413,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                         required
                       />
                     </div>
+                    {formData.phone.length > 0 && !isValidPhone && (
+                      <span className="text-[10px] text-red-500 font-bold block mt-2 leading-tight">
+                        Insira com DDD local (ex: 53 99999-9999). Sequências vazias não são aceitas.
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -485,6 +500,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                         required 
                       />
                     </div>
+                    {formData.birthDate.length === 10 && !isAdult && (
+                      <span className="text-[10px] text-red-500 font-bold block mt-2">
+                        Você precisa ter no mínimo 18 anos para simular.
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col space-y-3 w-full">
@@ -560,7 +580,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
               <button 
                 type="button"
                 onClick={handleNext}
-                disabled={(step === 1 && (!formData.name || !formData.phone)) || (step === 2 && !selectedProperty) || (step === 3 && formData.birthDate.length < 10)}
+                disabled={(step === 1 && (!formData.name || !formData.phone || !isNameValid || !isValidPhone)) || (step === 2 && !selectedProperty) || (step === 3 && (formData.birthDate.length < 10 || !isAdult))}
                 className="flex-1 bg-imperio-blue-900 text-white font-black uppercase text-xs tracking-widest py-4 rounded-2xl shadow-xl shadow-imperio-blue-900/20 flex items-center justify-center space-x-2 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <span>Próximo Passo</span>
