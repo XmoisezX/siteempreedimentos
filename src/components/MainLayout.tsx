@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PropertyList from './PropertyList';
 import PropertyMap from './PropertyMap';
 import SimulationForm from './SimulationForm';
@@ -6,7 +6,7 @@ import AdminDashboard from './admin/AdminDashboard';
 import WhatsAppButton from './WhatsAppButton';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
-import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon } from 'lucide-react';
+import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon } from 'lucide-react';
 
 export default function MainLayout() {
   const [activeTab, setActiveTab] = useState<'apartments' | 'houses'>('apartments');
@@ -22,6 +22,14 @@ export default function MainLayout() {
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
   const [isLoadingPdf, setIsLoadingPdf] = useState(true);
+  const [pdfZoom, setPdfZoom] = useState(1);
+
+  // Filters State
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterCompany, setFilterCompany] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterBedrooms, setFilterBedrooms] = useState<string>('all');
+  const [filterPriceRange, setFilterPriceRange] = useState<string>('all');
 
   // Recommendations State
   const [simulationData, setSimulationData] = useState<any>(null);
@@ -29,6 +37,26 @@ export default function MainLayout() {
   useEffect(() => {
     fetchProperties();
   }, []);
+
+  const filteredPropertiesMap = useMemo(() => {
+    return properties.filter(p => {
+      if (filterCompany !== 'all' && p.company !== filterCompany) return false;
+      if (filterStatus === 'ready' && !p.is_ready) return false;
+      if (filterStatus === 'construction' && p.is_ready) return false;
+      if (filterBedrooms !== 'all') {
+        const beds = parseInt(filterBedrooms);
+        if (beds === 4 && p.bedrooms < 4) return false;
+        if (beds !== 4 && p.bedrooms !== beds) return false;
+      }
+      if (filterPriceRange !== 'all') {
+        const price = p.valor_imovel_construtora || p.price || 0;
+        if (filterPriceRange === 'under200' && price >= 200000) return false;
+        if (filterPriceRange === '200to400' && (price < 200000 || price > 400000)) return false;
+        if (filterPriceRange === 'over400' && price <= 400000) return false;
+      }
+      return true;
+    });
+  }, [properties, filterCompany, filterStatus, filterBedrooms, filterPriceRange]);
 
   useEffect(() => {
     if (selectedProperty) {
@@ -63,12 +91,7 @@ export default function MainLayout() {
   const generateRecommendations = () => {
     if (!simulationData || !selectedProperty) return [];
     
-    let others = properties.filter(p => p.id !== selectedProperty.id && p.type === selectedProperty.type);
-    if (others.length < 3) {
-      const more = properties.filter(p => p.id !== selectedProperty.id && p.type !== selectedProperty.type);
-      others = [...others, ...more];
-    }
-    others = others.slice(0, 3);
+    const others = properties.filter(p => p.id !== selectedProperty.id);
 
     const { income, birthDate, dependents = 0 } = simulationData;
     if (!income || !birthDate) return [];
@@ -186,7 +209,77 @@ export default function MainLayout() {
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Empreendimentos</h2>
                   <p className="text-xs text-slate-400 font-medium">Exibindo imóveis na planta em Pelotas, RS</p>
                </div>
+               <button 
+                 onClick={() => setIsFilterOpen(!isFilterOpen)} 
+                 className={`p-2.5 rounded-xl transition-all ${isFilterOpen ? 'bg-imperio-blue-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                 title="Filtros Avançados"
+               >
+                 <FilterIcon className="w-4 h-4" />
+               </button>
             </div>
+
+            {/* Filter Panel */}
+            {isFilterOpen && (
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl mb-4 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                 {/* Construtora */}
+                 <div className="flex flex-col">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 focus-within:text-imperio-blue-900 transition-colors">Construtora</label>
+                   <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 transition-all cursor-pointer">
+                     <option value="all">Todas as construtoras</option>
+                     {Array.from(new Set(properties.map(p => p.company).filter(Boolean))).map(company => (
+                       <option key={company} value={company}>{company}</option>
+                     ))}
+                   </select>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-3">
+                   {/* Status */}
+                   <div className="flex flex-col">
+                     <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 focus-within:text-imperio-blue-900 transition-colors">Estágio da Obra</label>
+                     <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 transition-all cursor-pointer">
+                       <option value="all">Qualquer fase</option>
+                       <option value="ready">Prontos p/ morar</option>
+                       <option value="construction">Em obra (Planta)</option>
+                     </select>
+                   </div>
+                   
+                   {/* Quartos */}
+                   <div className="flex flex-col">
+                     <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 focus-within:text-imperio-blue-900 transition-colors">Dormitórios</label>
+                     <select value={filterBedrooms} onChange={e => setFilterBedrooms(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 transition-all cursor-pointer">
+                       <option value="all">Indiferente</option>
+                       <option value="1">1 Quarto</option>
+                       <option value="2">2 Quartos</option>
+                       <option value="3">3 Quartos</option>
+                       <option value="4">4+ Quartos</option>
+                     </select>
+                   </div>
+                 </div>
+
+                 {/* Valor */}
+                 <div className="flex flex-col">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5 focus-within:text-imperio-blue-900 transition-colors">Investimento (a partir de)</label>
+                   <select value={filterPriceRange} onChange={e => setFilterPriceRange(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 transition-all cursor-pointer">
+                     <option value="all">Todos os valores</option>
+                     <option value="under200">Até R$ 200.000</option>
+                     <option value="200to400">R$ 200.000 a R$ 400.000</option>
+                     <option value="over400">Acima de R$ 400.000</option>
+                   </select>
+                 </div>
+
+                 {/* Botão Limpar Filtros */}
+                 {(filterCompany !== 'all' || filterStatus !== 'all' || filterBedrooms !== 'all' || filterPriceRange !== 'all') && (
+                   <div className="pt-2">
+                     <button 
+                       onClick={() => { setFilterCompany('all'); setFilterStatus('all'); setFilterBedrooms('all'); setFilterPriceRange('all'); }} 
+                       className="w-full py-2.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white text-xs font-black uppercase tracking-[0.2em] rounded-lg transition-all active:scale-95"
+                     >
+                       Limpar Filtros ({[filterCompany, filterStatus, filterBedrooms, filterPriceRange].filter(f => f !== 'all').length})
+                     </button>
+                   </div>
+                 )}
+              </div>
+            )}
           </div>
 
           {/* Lista Scrollable */}
@@ -199,7 +292,7 @@ export default function MainLayout() {
             ) : (
               <PropertyList 
                 category={activeTab} 
-                properties={properties}
+                properties={filteredPropertiesMap}
                 onHover={setHoveredPropertyId}
                 onSelect={setSelectedProperty}
               />
@@ -212,7 +305,7 @@ export default function MainLayout() {
            <PropertyMap 
              hoveredPropertyId={hoveredPropertyId} 
              category={activeTab}
-             properties={properties}
+             properties={filteredPropertiesMap}
              onSelect={setSelectedProperty}
            />
            
@@ -370,6 +463,7 @@ export default function MainLayout() {
                             <button 
                               onClick={() => {
                                 setIsLoadingPdf(true);
+                                setPdfZoom(1);
                                 setShowPdfViewer(true);
                               }}
                               className="relative w-full py-4 bg-gradient-to-r from-imperio-gold-500 to-amber-500 hover:from-imperio-gold-600 hover:to-amber-600 text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/20 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
@@ -507,12 +601,37 @@ export default function MainLayout() {
                    </span>
                  </div>
                )}
-               <iframe 
-                 src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}`} 
-                 className={`w-full h-full border-none transition-opacity duration-500 ${isLoadingPdf ? 'opacity-0' : 'opacity-100'}`}
-                 title="Property Book"
-                 onLoad={() => setIsLoadingPdf(false)}
-               />
+
+               {/* Controle de Zoom */}
+               {!isLoadingPdf && (
+                 <div className="absolute top-4 right-4 flex flex-col bg-slate-900/80 backdrop-blur-md rounded-xl p-1 z-20 shadow-xl border border-white/10">
+                   <button onClick={() => setPdfZoom(z => Math.min(z + 0.25, 3))} className="p-2 text-white hover:bg-white/20 rounded-lg transition-all" title="Aumentar Zoom">
+                     <Plus className="w-5 h-5" />
+                   </button>
+                   <div className="h-px w-full bg-white/20 my-1"></div>
+                   <button onClick={() => setPdfZoom(z => Math.max(z - 0.25, 0.5))} className="p-2 text-white hover:bg-white/20 rounded-lg transition-all" title="Diminuir Zoom">
+                     <Minus className="w-5 h-5" />
+                   </button>
+                 </div>
+               )}
+
+               <div className="w-full h-full overflow-auto relative bg-slate-100 flex items-start justify-center">
+                 <div style={{ width: `${pdfZoom * 100}%`, height: `${pdfZoom * 100}%`, transition: 'all 0.3s ease' }} className="flex">
+                   <iframe 
+                     src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}`} 
+                     style={{ 
+                       transform: `scale(${pdfZoom})`, 
+                       transformOrigin: 'top left', 
+                       width: `${100 / pdfZoom}%`, 
+                       height: `${100 / pdfZoom}%`,
+                       transition: 'all 0.3s ease'
+                     }}
+                     className={`border-none shadow-2xl bg-white ${isLoadingPdf ? 'opacity-0' : 'opacity-100'}`}
+                     title="Property Book"
+                     onLoad={() => setIsLoadingPdf(false)}
+                   />
+                 </div>
+               </div>
                
                {/* Overlay para forçar interações via botões próprios se desejado */}
                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-6 py-3 rounded-full flex items-center space-x-6 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl pointer-events-none">
