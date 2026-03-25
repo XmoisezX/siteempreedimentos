@@ -243,7 +243,7 @@ export default function MainLayout() {
         {/* Modal de Detalhes (Slide-in) */}
         {selectedProperty && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-300 overflow-hidden">
-            <div className="bg-white w-full max-w-[100vw] md:w-[80vw] lg:w-[850px] lg:h-[850px] max-h-[92vh] rounded-[32px] md:rounded-[40px] overflow-x-hidden overflow-y-auto md:overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500 relative">
+            <div className="bg-white w-full max-w-[100vw] md:w-[80vw] lg:w-[950px] xl:w-[1050px] lg:h-[800px] max-h-[92vh] rounded-[32px] md:rounded-[40px] overflow-x-hidden overflow-y-auto md:overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500 relative">
               
               {/* Imagem em Destaque e Recomendações */}
               <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden ${simulationData ? 'hidden md:flex' : 'flex'}`}>
@@ -331,12 +331,12 @@ export default function MainLayout() {
                         Pronto para Simular
                       </span>
                       
-                      <div className="flex flex-col mb-6 w-full overflow-hidden">
-                        <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-4">
-                          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-none tracking-tighter uppercase italic break-words w-full sm:w-auto overflow-wrap-normal hyphens-auto">{selectedProperty.name}</h2>
-                          <div className="text-left sm:text-right shrink-0">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">A partir de</p>
-                            <p className="text-2xl font-black text-imperio-blue-900 italic">
+                      <div className="flex flex-col mb-6 w-full">
+                        <div className="flex flex-nowrap justify-between items-start gap-4 sm:gap-6">
+                          <h2 className="text-xl sm:text-[1.35rem] lg:text-[1.65rem] xl:text-3xl font-black text-slate-900 leading-[1.1] tracking-tighter uppercase italic flex-1 min-w-0 break-words pr-2">{selectedProperty.name}</h2>
+                          <div className="text-right flex-none shrink-0 pr-2">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">A partir de</p>
+                            <p className="text-lg sm:text-xl lg:text-2xl font-black text-imperio-blue-900 italic whitespace-nowrap">
                               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(selectedProperty.valor_imovel_construtora || selectedProperty.price || 0)}
                             </p>
                           </div>

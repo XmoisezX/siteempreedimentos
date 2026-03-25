@@ -588,19 +588,19 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                 <h4 className="text-[9px] font-bold text-blue-200/40 uppercase tracking-[0.3em] mb-4">Simulação CAIXA Aprovada</h4>
                 
                 <div className="mb-6 w-full">
-                  <div className="bg-white/5 rounded-2xl p-4 mb-4">
-                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Parcela Mensal Estimada</p>
-                     <p className="text-4xl font-black text-white italic tracking-tighter">{formatCurrency(result.parcel)}</p>
+                  <div className="bg-white/5 rounded-2xl p-4 mb-4 flex flex-col items-center text-center">
+                     <p className="text-[10px] lg:text-xs font-black text-white/40 uppercase tracking-widest mb-1 text-center w-full">Parcela Mensal Estimada</p>
+                     <p className="text-3xl md:text-[1.65rem] lg:text-3xl xl:text-4xl font-black text-white italic tracking-tighter text-center w-full leading-none py-1">{formatCurrency(result.parcel)}</p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full">
-                     <div className="bg-white/5 rounded-xl p-2 sm:p-3 overflow-hidden">
-                        <p className="text-[8px] text-white/30 font-bold uppercase mb-1 truncate">Entrada Estimada</p>
-                        <p className="text-xs sm:text-sm font-black text-imperio-gold-500 tracking-tighter truncate" title={formatCurrency(result.entry)}>{formatCurrency(result.entry)}</p>
+                  <div className="grid grid-cols-2 gap-2 lg:gap-3 w-full">
+                     <div className="bg-white/5 rounded-xl p-2 lg:p-3 overflow-hidden flex flex-col items-center justify-center text-center">
+                        <p className="text-[8px] lg:text-[9px] text-white/30 font-bold uppercase mb-1 w-full truncate">Entrada Estimada</p>
+                        <p className="text-[10px] lg:text-xs xl:text-sm font-black text-imperio-gold-500 tracking-tighter w-full lg:px-1" title={formatCurrency(result.entry)}>{formatCurrency(result.entry)}</p>
                      </div>
-                     <div className="bg-white/5 rounded-xl p-2 sm:p-3 overflow-hidden">
-                        <p className="text-[8px] text-white/30 font-bold uppercase mb-1 truncate">Financiado</p>
-                        <p className="text-xs sm:text-sm font-black text-white tracking-tighter truncate" title={formatCurrency(result.financed)}>{formatCurrency(result.financed)}</p>
+                     <div className="bg-white/5 rounded-xl p-2 lg:p-3 overflow-hidden flex flex-col items-center justify-center text-center">
+                        <p className="text-[8px] lg:text-[9px] text-white/30 font-bold uppercase mb-1 w-full truncate">Financiado</p>
+                        <p className="text-[10px] lg:text-xs xl:text-sm font-black text-white tracking-tighter w-full lg:px-1" title={formatCurrency(result.financed)}>{formatCurrency(result.financed)}</p>
                      </div>
                   </div>
                 </div>
