@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PropertyList from './PropertyList';
 import PropertyMap from './PropertyMap';
 import SimulationForm from './SimulationForm';
@@ -35,9 +35,7 @@ export default function MainLayout() {
   // Recommendations State
   const [simulationData, setSimulationData] = useState<any>(null);
 
-  // Scroll Header State
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
+
 
   const handleWhatsAppAction = async () => {
     const message = encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os empreendimentos.');
