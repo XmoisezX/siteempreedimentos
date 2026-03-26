@@ -24,7 +24,7 @@ export default function WhatsAppButton() {
     <button
       onClick={handleWhatsAppClick}
       disabled={loading}
-      className="fixed bottom-6 right-6 z-[9999] group disabled:opacity-80"
+      className="hidden md:block fixed bottom-6 right-6 z-[9999] group disabled:opacity-80"
       aria-label="Falar com especialista no WhatsApp"
     >
       {/* Pulse Effect */}

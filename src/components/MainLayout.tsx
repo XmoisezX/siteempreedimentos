@@ -6,7 +6,8 @@ import AdminDashboard from './admin/AdminDashboard';
 import WhatsAppButton from './WhatsAppButton';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
-import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon } from 'lucide-react';
+import { getRotatedBroker } from '../lib/brokers';
+import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon, MessageCircle } from 'lucide-react';
 
 export default function MainLayout() {
   const [activeTab, setActiveTab] = useState<'apartments' | 'houses'>('apartments');
@@ -33,6 +34,22 @@ export default function MainLayout() {
 
   // Recommendations State
   const [simulationData, setSimulationData] = useState<any>(null);
+
+  // Scroll Header State
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  const handleWhatsAppAction = async () => {
+    const message = encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os empreendimentos.');
+    try {
+      const broker = await getRotatedBroker();
+      const whatsappLink = `https://wa.me/${broker.phone}?text=${message}`;
+      window.open(whatsappLink, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Error in WhatsApp rotation:', error);
+      window.open(`https://wa.me/5553994445566?text=${message}`, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   useEffect(() => {
     fetchProperties();
@@ -158,9 +175,9 @@ export default function MainLayout() {
   const recommendations = generateRecommendations();
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans pb-16 md:pb-0">
       {/* Header Premium */}
-      <header className="bg-white border-b border-slate-100 px-6 py-2 md:py-4 flex items-center justify-between shrink-0 z-20 shadow-sm">
+      <header className={`bg-white border-b border-slate-100 px-4 md:px-6 py-2 md:py-4 flex items-center justify-between shrink-0 z-20 shadow-sm transition-all duration-300 ${!isHeaderVisible ? '-mt-[70px] opacity-0 pointer-events-none' : 'mt-0 opacity-100'}`}>
         <div className="flex items-center">
           <img 
             src="/LOGO LARANJA.png" 
@@ -283,7 +300,18 @@ export default function MainLayout() {
           </div>
 
           {/* Lista Scrollable */}
-          <div className="flex-1 overflow-y-auto px-6 pb-6 scrollbar-hide">
+          <div 
+            className="flex-1 overflow-y-auto px-4 md:px-6 pb-24 md:pb-6 scrollbar-hide"
+            onScroll={(e) => {
+              const currentScrollY = e.currentTarget.scrollTop;
+              if (currentScrollY > lastScrollY && currentScrollY > 50) {
+                setIsHeaderVisible(false);
+              } else if (currentScrollY < lastScrollY) {
+                setIsHeaderVisible(true);
+              }
+              setLastScrollY(currentScrollY);
+            }}
+          >
             {loading ? (
               <div className="flex flex-col items-center justify-center h-64 space-y-4">
                 <Loader2 className="w-8 h-8 animate-spin text-imperio-blue-900/20" />
@@ -313,31 +341,39 @@ export default function MainLayout() {
            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/5 to-transparent pointer-events-none z-10" />
         </div>
 
-        {/* Floating Toggle Button for Mobile */}
-        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center justify-center w-full px-4 pointer-events-none">
-          <button
-            onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
-            className={`relative pointer-events-auto flex items-center space-x-3 font-black uppercase tracking-[0.2em] text-[11px] backdrop-blur-md active:scale-95 transition-all duration-500 px-10 py-5 rounded-full ${
-              mobileView === 'list' 
-                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border border-orange-400 shadow-[0_10px_40px_rgba(234,88,12,0.4)] animate-bounce' 
-                : 'bg-white text-orange-600 border border-slate-200 shadow-xl'
-            }`}
-          >
-            <div className="relative z-10 flex items-center space-x-3">
-              {mobileView === 'list' ? (
-                <>
-                  <MapIcon className="w-5 h-5 text-imperio-gold-500" />
-                  <span className="text-white drop-shadow-md tracking-[0.25em]">Ver no Mapa</span>
-                </>
-              ) : (
-                <>
-                  <ListIcon className="w-5 h-5 text-orange-600" />
-                  <span>Ver Lista</span>
-                </>
-              )}
-            </div>
-          </button>
-        </div>
+        {/* Bottom Navigation Bar for Mobile */}
+        <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 z-[60] pb-2 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-around px-2 pb-1 pt-3">
+            <button 
+              onClick={() => { setMobileView('list'); setHoveredPropertyId(null); }}
+              className={`flex flex-col items-center space-y-1 ${mobileView === 'list' && !isFilterOpen ? 'text-imperio-blue-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <ListIcon className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Lista</span>
+            </button>
+            <button 
+              onClick={() => { setMobileView('map'); setIsFilterOpen(false); }}
+              className={`flex flex-col items-center space-y-1 ${mobileView === 'map' && !isFilterOpen ? 'text-imperio-blue-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <MapIcon className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Mapa</span>
+            </button>
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`flex flex-col items-center space-y-1 ${isFilterOpen ? 'text-imperio-blue-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <FilterIcon className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Filtros</span>
+            </button>
+            <button 
+              onClick={handleWhatsAppAction}
+              className="flex flex-col items-center space-y-1 text-slate-400 hover:text-[#25D366]"
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-[10px] font-bold">Recepção</span>
+            </button>
+          </div>
+        </nav>
 
         {/* Modal de Detalhes (Slide-in) */}
         {selectedProperty && (

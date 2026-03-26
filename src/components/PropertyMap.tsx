@@ -24,7 +24,7 @@ interface PropertyMapProps {
 function MapFlyTo({ hoveredPropertyId, filteredProperties }: { hoveredPropertyId: string | null, filteredProperties: Property[] }) {
   const map = useMap();
   
-  useMemo(() => {
+  useEffect(() => {
     if (hoveredPropertyId) {
       const property = filteredProperties.find(p => p.id === hoveredPropertyId);
       if (property) {
