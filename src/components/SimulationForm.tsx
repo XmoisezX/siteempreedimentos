@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Sparkles, Building2, Phone, UserCircle2, Download } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCircle2, Sparkles, Building2, Phone, UserCircle2, Download, Share2 } from 'lucide-react';
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
 import { getRotatedBroker } from '../lib/brokers';
@@ -344,6 +344,32 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   const rawPhone = formData.phone.replace(/\D/g, '');
   const isValidPhone = !formData.phone || (rawPhone.length === 11 && !/(.)\1{4,}/.test(rawPhone) && Number(rawPhone.substring(0,2)) >= 11);
   const isAdult = !formData.birthDate || formData.birthDate.length < 10 || calculateAge(formData.birthDate) >= 18;
+
+  const handleShareSimulation = async () => {
+    if (!result || !selectedProperty) return;
+    
+    const shareText = `*Simulação de Financiamento - ${selectedProperty.name}*\n\n` +
+      `👤 Cliente: ${formData.name}\n` +
+      `💰 Renda Informada: ${formatCurrency(formData.income)}\n` +
+      `🏠 Valor do Imóvel: ${formatCurrency(result.propertyValue)}\n` +
+      `💵 Entrada Prevista: ${formatCurrency(result.entry)}\n` +
+      `💳 Parcela Mensal Estimada: ${formatCurrency(result.parcel)}\n\n` +
+      `*Imperial Paris Imóveis*`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Simulação Caixa - Imperial Paris',
+          text: shareText,
+        });
+      } catch (err) {
+        console.warn('Erro ao compartilhar', err);
+      }
+    } else {
+      navigator.clipboard.writeText(shareText);
+      alert('Resumo copiado para a área de transferência! Cole no seu WhatsApp ou mensagem.');
+    }
+  };
 
   return (
     <div className="bg-white rounded-3xl relative h-auto flex flex-col p-2">
@@ -704,13 +730,25 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
              <p className="text-[8px] text-slate-400 font-medium text-center uppercase mt-3">* Esta é uma simulação preliminar e não garante aprovação de crédito.</p>
              
              {result.debugLog && (
-               <button 
-                 onClick={downloadDebugLog}
-                 className="w-full mt-4 flex items-center justify-center space-x-2 py-2 px-4 border border-slate-200 rounded-xl text-[9px] font-black text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all uppercase tracking-widest"
-               >
-                 <Download className="w-3.5 h-3.5" />
-                 <span>Baixar Demonstrativo de Cálculo (TXT)</span>
-               </button>
+                <div className="flex flex-col space-y-2 mt-4">
+                 <button 
+                   onClick={handleShareSimulation}
+                   type="button"
+                   className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-[10px] font-black text-white transition-all uppercase tracking-widest active:scale-95 shadow-lg shadow-emerald-500/20"
+                 >
+                   <Share2 className="w-4 h-4" />
+                   <span>Compartilhar Simulação</span>
+                 </button>
+                 
+                 <button 
+                   onClick={downloadDebugLog}
+                   type="button"
+                   className="w-full flex items-center justify-center space-x-2 py-2 px-4 border border-slate-200 rounded-xl text-[9px] font-black text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all uppercase tracking-widest active:scale-95"
+                 >
+                   <Download className="w-3.5 h-3.5" />
+                   <span>Baixar Demonstrativo Caixa (TXT)</span>
+                 </button>
+                </div>
              )}
           </div>
 
