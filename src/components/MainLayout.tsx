@@ -314,22 +314,28 @@ export default function MainLayout() {
         </div>
 
         {/* Floating Toggle Button for Mobile */}
-        <div className="md:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex items-center justify-center w-full px-4 pointer-events-none">
+        <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center justify-center w-full px-4 pointer-events-none">
           <button
             onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
-            className="pointer-events-auto bg-imperio-blue-900 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(15,38,92,0.3)] flex items-center space-x-3 font-black uppercase tracking-[0.2em] text-[10px] border border-white/10 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-4 duration-500"
+            className={`relative pointer-events-auto flex items-center space-x-3 font-black uppercase tracking-[0.2em] text-[11px] backdrop-blur-md active:scale-95 transition-all duration-500 px-10 py-5 rounded-full ${
+              mobileView === 'list' 
+                ? 'bg-gradient-to-r from-imperio-blue-900 to-blue-950 text-white border border-imperio-blue-800 shadow-[0_10px_40px_rgba(15,38,92,0.6)] animate-bounce' 
+                : 'bg-white text-imperio-blue-900 border border-slate-200 shadow-xl'
+            }`}
           >
-            {mobileView === 'list' ? (
-              <>
-                <MapIcon className="w-4 h-4 text-imperio-gold-500" />
-                <span>Ver no Mapa</span>
-              </>
-            ) : (
-              <>
-                <ListIcon className="w-4 h-4 text-imperio-gold-500" />
-                <span>Ver Lista</span>
-              </>
-            )}
+            <div className="relative z-10 flex items-center space-x-3">
+              {mobileView === 'list' ? (
+                <>
+                  <MapIcon className="w-5 h-5 text-imperio-gold-500" />
+                  <span className="text-white drop-shadow-md tracking-[0.25em]">Ver no Mapa</span>
+                </>
+              ) : (
+                <>
+                  <ListIcon className="w-5 h-5 text-imperio-blue-900" />
+                  <span>Ver Lista</span>
+                </>
+              )}
+            </div>
           </button>
         </div>
 
