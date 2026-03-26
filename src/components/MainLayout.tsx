@@ -160,12 +160,12 @@ export default function MainLayout() {
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans">
       {/* Header Premium */}
-      <header className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 z-20 shadow-sm">
+      <header className="bg-white border-b border-slate-100 px-6 py-2 md:py-4 flex items-center justify-between shrink-0 z-20 shadow-sm">
         <div className="flex items-center">
           <img 
             src="/LOGO LARANJA.png" 
             alt="Imperial Paris" 
-            className="h-12 w-auto object-contain"
+            className="h-8 md:h-12 w-auto object-contain"
           />
         </div>
         
@@ -186,28 +186,28 @@ export default function MainLayout() {
         <div className={`w-full md:w-[450px] lg:w-[500px] flex flex-col bg-white border-r border-slate-100 z-10 shadow-2xl relative ${mobileView === 'map' ? 'hidden md:flex' : 'flex'}`}>
           
           {/* Tabs Elevadas */}
-          <div className="p-6 pb-2">
-            <div className="flex p-1 bg-slate-100 rounded-2xl mb-6 shadow-inner">
+          <div className="p-4 md:p-6 pb-1 md:pb-2">
+            <div className="flex p-1 bg-slate-100 rounded-2xl mb-3 md:mb-6 shadow-inner">
                <button 
                  onClick={() => setActiveTab('apartments')}
-                 className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'apartments' ? 'bg-white text-imperio-blue-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                 className={`flex-1 flex items-center justify-center space-x-2 py-2 md:py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'apartments' ? 'bg-white text-imperio-blue-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
                >
                  <LayoutPanelLeft className="w-4 h-4" />
                  <span>Apartamentos</span>
                </button>
                <button 
                  onClick={() => setActiveTab('houses')}
-                 className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'houses' ? 'bg-white text-imperio-blue-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
+                 className={`flex-1 flex items-center justify-center space-x-2 py-2 md:py-3 rounded-xl font-bold text-sm transition-all duration-300 ${activeTab === 'houses' ? 'bg-white text-imperio-blue-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}
                >
                  <FileText className="w-4 h-4" />
                  <span>Casas</span>
                </button>
             </div>
             
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2 md:mb-4">
                <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Empreendimentos</h2>
-                  <p className="text-xs text-slate-400 font-medium">Exibindo imóveis na planta em Pelotas, RS</p>
+                  <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Empreendimentos</h2>
+                  <p className="text-[10px] md:text-xs text-slate-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Exibindo imóveis na planta em Pelotas, RS</p>
                </div>
                <button 
                  onClick={() => setIsFilterOpen(!isFilterOpen)} 
@@ -319,8 +319,8 @@ export default function MainLayout() {
             onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
             className={`relative pointer-events-auto flex items-center space-x-3 font-black uppercase tracking-[0.2em] text-[11px] backdrop-blur-md active:scale-95 transition-all duration-500 px-10 py-5 rounded-full ${
               mobileView === 'list' 
-                ? 'bg-gradient-to-r from-imperio-blue-900 to-blue-950 text-white border border-imperio-blue-800 shadow-[0_10px_40px_rgba(15,38,92,0.6)] animate-bounce' 
-                : 'bg-white text-imperio-blue-900 border border-slate-200 shadow-xl'
+                ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border border-orange-400 shadow-[0_10px_40px_rgba(234,88,12,0.4)] animate-bounce' 
+                : 'bg-white text-orange-600 border border-slate-200 shadow-xl'
             }`}
           >
             <div className="relative z-10 flex items-center space-x-3">
@@ -331,7 +331,7 @@ export default function MainLayout() {
                 </>
               ) : (
                 <>
-                  <ListIcon className="w-5 h-5 text-imperio-blue-900" />
+                  <ListIcon className="w-5 h-5 text-orange-600" />
                   <span>Ver Lista</span>
                 </>
               )}
