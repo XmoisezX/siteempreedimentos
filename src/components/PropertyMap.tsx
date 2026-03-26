@@ -28,7 +28,8 @@ function MapFlyTo({ hoveredPropertyId, filteredProperties }: { hoveredPropertyId
     if (hoveredPropertyId) {
       const property = filteredProperties.find(p => p.id === hoveredPropertyId);
       if (property) {
-        map.flyTo([property.lat, property.lng], 14, { duration: 1.5 });
+        // Aumentado a duration de 1.5 para 3.0 para deixar o movimento da câmera mais lento e suave
+        map.flyTo([property.lat, property.lng], 14, { duration: 3.0, easeLinearity: 0.25 });
       }
     }
   }, [hoveredPropertyId, map, filteredProperties]);

@@ -4,9 +4,10 @@ import { LogIn, Loader2, AlertCircle } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: () => void;
+  onExit: () => void;
 }
 
-export default function LoginForm({ onLogin }: LoginFormProps) {
+export default function LoginForm({ onLogin, onExit }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -76,9 +77,17 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-imperio-blue-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-50 mt-8"
+            className="w-full bg-imperio-blue-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-50 mt-8 mb-4"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>Entrar no Painel</span>}
+          </button>
+          
+          <button 
+            type="button" 
+            onClick={onExit}
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-xl transition-all"
+          >
+            Voltar ao Site
           </button>
         </form>
 

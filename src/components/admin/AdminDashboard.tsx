@@ -79,7 +79,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   }
 
   if (!session) {
-    return <LoginForm onLogin={() => {}} />;
+    return <LoginForm onLogin={() => {}} onExit={onExit} />;
   }
 
   return (
