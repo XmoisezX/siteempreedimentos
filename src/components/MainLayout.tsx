@@ -41,29 +41,39 @@ export default function MainLayout() {
 
   const handleWhatsAppAction = async () => {
     const message = encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os empreendimentos.');
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    // Abre a nova guia síncrona para contornar bloqueadores de pop-up no mobile
-    const newWindow = window.open('about:blank', '_blank');
-    if (newWindow) {
-      newWindow.document.write('<div style="font-family: sans-serif; text-align: center; margin-top: 50px;">Redirecionando para o WhatsApp...</div>');
+    // Para desktop, abre janela auxiliar síncrona contra bloqueadores.
+    let newWindow: Window | null = null;
+    if (!isMobile) {
+      newWindow = window.open('about:blank', '_blank');
+      if (newWindow) {
+        newWindow.document.write('<div style="font-family: sans-serif; text-align: center; margin-top: 50px;">Redirecionando para o WhatsApp...</div>');
+      }
     }
 
     try {
       const broker = await getRotatedBroker();
-      const whatsappLink = `https://wa.me/${broker.phone}?text=${message}`;
+      const whatsappNative = `whatsapp://send?phone=${broker.phone}&text=${message}`;
+      const whatsappWeb = `https://wa.me/${broker.phone}?text=${message}`;
       
       if (newWindow) {
-        newWindow.location.href = whatsappLink;
+        newWindow.location.href = whatsappWeb;
       } else {
-        window.location.href = whatsappLink;
+        // Modo Mobile: Executa chamada nativa sem aba em branco, mantendo o site aberto
+        window.location.href = whatsappNative;
+        setTimeout(() => { if (!document.hidden) window.location.href = whatsappWeb; }, 2000);
       }
     } catch (error) {
       console.error('Error in WhatsApp rotation:', error);
-      const fallbackLink = `https://wa.me/5553994445566?text=${message}`;
+      const fallbackNative = `whatsapp://send?phone=5553994445566&text=${message}`;
+      const fallbackWeb = `https://wa.me/5553994445566?text=${message}`;
+      
       if (newWindow) {
-        newWindow.location.href = fallbackLink;
+        newWindow.location.href = fallbackWeb;
       } else {
-        window.location.href = fallbackLink;
+        window.location.href = fallbackNative;
+        setTimeout(() => { if (!document.hidden) window.location.href = fallbackWeb; }, 2000);
       }
     }
   };
@@ -193,8 +203,8 @@ export default function MainLayout() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 overflow-hidden font-sans pb-16 md:pb-0">
-      {/* Header Premium */}
-      <header className={`bg-white border-b border-slate-100 px-4 md:px-6 py-2 md:py-4 flex items-center justify-between shrink-0 z-20 shadow-sm transition-all duration-300 ${!isHeaderVisible ? '-mt-[70px] opacity-0 pointer-events-none' : 'mt-0 opacity-100'}`}>
+      {/* Header Premium (Fixo)  */}
+      <header className="bg-white border-b border-slate-100 px-4 md:px-6 py-2 md:py-4 flex items-center justify-between shrink-0 z-20 shadow-sm transition-all duration-300">
         <div className="flex items-center">
           <img 
             src="/LOGO LARANJA.png" 
@@ -252,8 +262,8 @@ export default function MainLayout() {
                </button>
             </div>
 
-            {/* Filter Panel */}
-            {isFilterOpen && (
+            {/* Filter Panel (Inline para a lista) */}
+            {isFilterOpen && mobileView === 'list' && (
               <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl mb-4 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
                  {/* Construtora */}
                  <div className="flex flex-col">
@@ -301,39 +311,28 @@ export default function MainLayout() {
                    </select>
                  </div>
 
-                 {/* Botão Limpar Filtros */}
-                 {(filterCompany !== 'all' || filterStatus !== 'all' || filterBedrooms !== 'all' || filterPriceRange !== 'all') && (
-                   <div className="pt-2">
+                 <div className="pt-2 flex space-x-2">
+                   {(filterCompany !== 'all' || filterStatus !== 'all' || filterBedrooms !== 'all' || filterPriceRange !== 'all') && (
                      <button 
                        onClick={() => { setFilterCompany('all'); setFilterStatus('all'); setFilterBedrooms('all'); setFilterPriceRange('all'); }} 
-                       className="w-full py-2.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white text-xs font-black uppercase tracking-[0.2em] rounded-lg transition-all active:scale-95"
+                       className="flex-1 py-3 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white text-[10px] uppercase font-black tracking-widest rounded-xl transition-all"
                      >
-                       Limpar Filtros ({[filterCompany, filterStatus, filterBedrooms, filterPriceRange].filter(f => f !== 'all').length})
+                       Limpar
                      </button>
-                   </div>
-                 )}
+                   )}
+                   <button 
+                     onClick={() => setIsFilterOpen(false)} 
+                     className="flex-[2] py-3 bg-imperio-blue-900 text-white hover:bg-black text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md"
+                   >
+                     Aplicar Filtros
+                   </button>
+                 </div>
               </div>
             )}
           </div>
 
           {/* Lista Scrollable */}
-          <div 
-            className="flex-1 overflow-y-auto px-4 md:px-6 pb-24 md:pb-6 scrollbar-hide"
-            onScroll={(e) => {
-              const currentScrollY = e.currentTarget.scrollTop;
-              
-              // Evita loops infinitos de redimensionamento (Thrashing) ao esconder/mostrar o header 
-              if (Math.abs(currentScrollY - lastScrollY.current) < 15) return;
-              
-              if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
-                setIsHeaderVisible(false);
-                lastScrollY.current = currentScrollY;
-              } else if (currentScrollY < lastScrollY.current) {
-                setIsHeaderVisible(true);
-                lastScrollY.current = currentScrollY;
-              }
-            }}
-          >
+          <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-24 md:pb-6 scrollbar-hide">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-64 space-y-4">
                 <Loader2 className="w-8 h-8 animate-spin text-imperio-blue-900/20" />
@@ -353,7 +352,7 @@ export default function MainLayout() {
         {/* Lado Direito: Mapa (Ocupa o resto) */}
         <div className={`flex-1 relative bg-slate-200 ${mobileView === 'list' ? 'hidden md:block' : 'block'}`}>
            <button 
-             onClick={() => { setMobileView('list'); setIsFilterOpen(true); }}
+             onClick={() => setIsFilterOpen(!isFilterOpen)}
              className="md:hidden absolute top-4 right-4 z-[90] bg-white p-3.5 rounded-full shadow-lg flex items-center justify-center text-imperio-blue-900 border border-slate-100 hover:bg-slate-50 transition-colors"
              title="Abrir Filtros"
            >
@@ -370,6 +369,81 @@ export default function MainLayout() {
              onSelect={setSelectedProperty}
            />
            
+           {/* Overlay Map Filter Panel (Slide down do topo do mapa) */}
+           {isFilterOpen && mobileView === 'map' && (
+             <div className="absolute top-0 left-0 w-full bg-slate-50/95 backdrop-blur-xl border-b border-slate-200 p-5 shadow-2xl z-[100] animate-in fade-in slide-in-from-top-10 duration-300 rounded-b-3xl space-y-4">
+                 <div className="flex items-center justify-between mb-2">
+                   <h3 className="font-black text-imperio-blue-900 text-sm uppercase tracking-widest">Filtros Avançados</h3>
+                   <button onClick={() => setIsFilterOpen(false)} className="bg-slate-200 text-slate-500 hover:text-slate-800 p-1.5 rounded-full">
+                     <CloseIcon className="w-4 h-4" />
+                   </button>
+                 </div>
+                 
+                 {/* Construtora */}
+                 <div className="flex flex-col">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Construtora</label>
+                   <select value={filterCompany} onChange={e => setFilterCompany(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg p-3 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 shadow-sm leading-tight">
+                     <option value="all">Todas</option>
+                     {Array.from(new Set(properties.map(p => p.company).filter(Boolean))).map(company => (
+                       <option key={company} value={company}>{company}</option>
+                     ))}
+                   </select>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-3">
+                   {/* Status */}
+                   <div className="flex flex-col">
+                     <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Estágio</label>
+                     <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg p-3 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 shadow-sm leading-tight">
+                       <option value="all">Todas</option>
+                       <option value="ready">Prontos</option>
+                       <option value="construction">Planta</option>
+                     </select>
+                   </div>
+                   
+                   {/* Quartos */}
+                   <div className="flex flex-col">
+                     <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Dormitórios</label>
+                     <select value={filterBedrooms} onChange={e => setFilterBedrooms(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg p-3 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 shadow-sm leading-tight">
+                       <option value="all">Indiferente</option>
+                       <option value="1">1 Quarto</option>
+                       <option value="2">2 Quartos</option>
+                       <option value="3">3 Quartos</option>
+                       <option value="4">4+ Quartos</option>
+                     </select>
+                   </div>
+                 </div>
+
+                 {/* Valor */}
+                 <div className="flex flex-col">
+                   <label className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Investimento Mínimo</label>
+                   <select value={filterPriceRange} onChange={e => setFilterPriceRange(e.target.value)} className="w-full bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-lg p-3 outline-none focus:ring-2 focus:ring-imperio-blue-900/20 shadow-sm leading-tight">
+                     <option value="all">Todos os valores</option>
+                     <option value="under200">Até R$ 200.000</option>
+                     <option value="200to400">R$ 200.000 a R$ 400.000</option>
+                     <option value="over400">Acima de R$ 400.000</option>
+                   </select>
+                 </div>
+
+                 <div className="pt-2 flex space-x-2">
+                   {(filterCompany !== 'all' || filterStatus !== 'all' || filterBedrooms !== 'all' || filterPriceRange !== 'all') && (
+                     <button 
+                       onClick={() => { setFilterCompany('all'); setFilterStatus('all'); setFilterBedrooms('all'); setFilterPriceRange('all'); }} 
+                       className="flex-1 py-3 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white text-[10px] uppercase font-black tracking-widest rounded-xl transition-all"
+                     >
+                       Limpar
+                     </button>
+                   )}
+                   <button 
+                     onClick={() => setIsFilterOpen(false)} 
+                     className="flex-[2] py-3 bg-imperio-blue-900 text-white hover:bg-black text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md"
+                   >
+                     Aplicar Filtros
+                   </button>
+                 </div>
+             </div>
+           )}
+
            {/* Overlay Decorativo Gradiente */}
            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/5 to-transparent pointer-events-none z-10" />
         </div>
@@ -392,14 +466,7 @@ export default function MainLayout() {
               <span className="text-[10px] font-bold">Mapa</span>
             </button>
             <button 
-              onClick={() => {
-                if (mobileView === 'map') {
-                  setMobileView('list');
-                  setIsFilterOpen(true);
-                } else {
-                  setIsFilterOpen(!isFilterOpen);
-                }
-              }}
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`flex flex-col items-center space-y-1 ${isFilterOpen ? 'text-imperio-blue-900' : 'text-slate-400 hover:text-slate-600'}`}
             >
               <FilterIcon className="w-5 h-5" />
