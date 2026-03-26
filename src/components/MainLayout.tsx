@@ -41,13 +41,30 @@ export default function MainLayout() {
 
   const handleWhatsAppAction = async () => {
     const message = encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os empreendimentos.');
+    
+    // Abre a nova guia síncrona para contornar bloqueadores de pop-up no mobile
+    const newWindow = window.open('about:blank', '_blank');
+    if (newWindow) {
+      newWindow.document.write('<div style="font-family: sans-serif; text-align: center; margin-top: 50px;">Redirecionando para o WhatsApp...</div>');
+    }
+
     try {
       const broker = await getRotatedBroker();
       const whatsappLink = `https://wa.me/${broker.phone}?text=${message}`;
-      window.open(whatsappLink, '_blank', 'noopener,noreferrer');
+      
+      if (newWindow) {
+        newWindow.location.href = whatsappLink;
+      } else {
+        window.location.href = whatsappLink;
+      }
     } catch (error) {
       console.error('Error in WhatsApp rotation:', error);
-      window.open(`https://wa.me/5553994445566?text=${message}`, '_blank', 'noopener,noreferrer');
+      const fallbackLink = `https://wa.me/5553994445566?text=${message}`;
+      if (newWindow) {
+        newWindow.location.href = fallbackLink;
+      } else {
+        window.location.href = fallbackLink;
+      }
     }
   };
 
@@ -304,12 +321,17 @@ export default function MainLayout() {
             className="flex-1 overflow-y-auto px-4 md:px-6 pb-24 md:pb-6 scrollbar-hide"
             onScroll={(e) => {
               const currentScrollY = e.currentTarget.scrollTop;
-              if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+              
+              // Evita loops infinitos de redimensionamento (Thrashing) ao esconder/mostrar o header 
+              if (Math.abs(currentScrollY - lastScrollY.current) < 15) return;
+              
+              if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
                 setIsHeaderVisible(false);
+                lastScrollY.current = currentScrollY;
               } else if (currentScrollY < lastScrollY.current) {
                 setIsHeaderVisible(true);
+                lastScrollY.current = currentScrollY;
               }
-              lastScrollY.current = currentScrollY;
             }}
           >
             {loading ? (
@@ -330,6 +352,17 @@ export default function MainLayout() {
 
         {/* Lado Direito: Mapa (Ocupa o resto) */}
         <div className={`flex-1 relative bg-slate-200 ${mobileView === 'list' ? 'hidden md:block' : 'block'}`}>
+           <button 
+             onClick={() => { setMobileView('list'); setIsFilterOpen(true); }}
+             className="md:hidden absolute top-4 right-4 z-[90] bg-white p-3.5 rounded-full shadow-lg flex items-center justify-center text-imperio-blue-900 border border-slate-100 hover:bg-slate-50 transition-colors"
+             title="Abrir Filtros"
+           >
+             <FilterIcon className="w-5 h-5" />
+             {(filterCompany !== 'all' || filterStatus !== 'all' || filterBedrooms !== 'all' || filterPriceRange !== 'all') && (
+               <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+             )}
+           </button>
+
            <PropertyMap 
              hoveredPropertyId={hoveredPropertyId} 
              category={activeTab}
