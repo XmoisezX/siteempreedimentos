@@ -387,10 +387,21 @@ export default function MainLayout() {
         {/* Modal de Detalhes (Slide-in) */}
         {selectedProperty && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md transition-all animate-in fade-in duration-300 overflow-hidden">
-            <div className="bg-white w-full max-w-[100vw] md:w-[80vw] lg:w-[950px] xl:w-[1050px] lg:h-[800px] max-h-[92vh] rounded-[32px] md:rounded-[40px] overflow-x-hidden overflow-y-auto md:overflow-hidden shadow-2xl flex flex-col md:flex-row animate-in slide-in-from-bottom-10 duration-500 relative">
+            <div className="bg-white w-full max-w-[100vw] md:w-[80vw] lg:w-[950px] xl:w-[1050px] lg:h-[800px] max-h-[92vh] rounded-[32px] md:rounded-[40px] overflow-x-hidden overflow-y-auto md:overflow-hidden shadow-2xl block md:flex md:flex-row animate-in slide-in-from-bottom-10 duration-500 relative">
               
+              {/* Mobile Sticky Header */}
+              <div className="md:hidden sticky top-0 w-full bg-white/95 backdrop-blur-2xl z-[150] border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm">
+                 <h2 className="text-sm font-black text-slate-900 uppercase tracking-tighter truncate pr-4">{selectedProperty.name}</h2>
+                 <button 
+                   onClick={() => setSelectedProperty(undefined)}
+                   className="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors p-2 rounded-full shrink-0 flex items-center justify-center"
+                 >
+                   <CloseIcon className="w-5 h-5" />
+                 </button>
+              </div>
+
               {/* Imagem em Destaque e Recomendações */}
-              <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden ${simulationData ? 'hidden md:flex' : 'flex'}`}>
+              <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden ${showSimulator || simulationData ? 'hidden md:flex' : 'flex'}`}>
                 <img src={selectedProperty.image_url} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
                 <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
                 
@@ -435,17 +446,10 @@ export default function MainLayout() {
                      </div>
                   </div>
                 )}
-
-                <button 
-                  onClick={() => setSelectedProperty(undefined)}
-                  className="absolute top-4 left-4 bg-red-600 text-white p-2.5 rounded-full shadow-[0_4px_15px_rgba(220,38,38,0.5)] border-2 border-white hover:bg-red-700 active:scale-95 transition-all md:hidden z-[100] flex items-center justify-center"
-                >
-                  <CloseIcon className="w-5 h-5" />
-                </button>
               </div>
 
               {/* Informações e Formulário */}
-              <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-y-auto overflow-x-hidden flex-1 min-h-0 scrollbar-hide">
+              <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-visible md:overflow-x-hidden md:overflow-y-auto md:flex-1 md:min-h-0 scrollbar-hide">
                 <button 
                   onClick={() => setSelectedProperty(undefined)}
                   className="absolute top-4 right-4 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-full transition-all hidden md:flex items-center justify-center z-50 group"
@@ -684,10 +688,7 @@ export default function MainLayout() {
                  </div>
                </div>
                
-               {/* Overlay para forçar interações via botões próprios se desejado */}
-               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-6 py-3 rounded-full flex items-center space-x-6 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl pointer-events-none">
-                  Imperial Paris • Visualizador de Book
-               </div>
+               {/* Overlay para forçar interações via botões próprios se desejado (removido a pedido do cliente) */}
             </div>
           </div>
         )}
