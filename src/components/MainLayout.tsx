@@ -119,15 +119,32 @@ export default function MainLayout() {
     return <AdminDashboard onExit={() => { setIsAdmin(false); fetchProperties(); }} />;
   }
 
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-      age--;
+  const calculateAgeInMonths = (birthDateStr: string) => {
+    let birth = new Date(birthDateStr);
+    if (birthDateStr.includes('/') && birthDateStr.length === 10) {
+      const [day, month, year] = birthDateStr.split('/');
+      birth = new Date(Number(year), Number(month) - 1, Number(day));
     }
-    return age;
+    if (isNaN(birth.getTime())) return 18 * 12; // Fallback to 18 years
+    const today = new Date();
+    const years = today.getFullYear() - birth.getFullYear();
+    const months = today.getMonth() - birth.getMonth();
+    return years * 12 + months;
+  };
+
+  const getMipRateByAge = (applicantAge: number) => {
+    if (applicantAge <= 25) return 0.00011;
+    if (applicantAge <= 30) return 0.00012;
+    if (applicantAge <= 35) return 0.00014;
+    if (applicantAge <= 40) return 0.00018;
+    if (applicantAge <= 45) return 0.00025;
+    if (applicantAge <= 50) return 0.00036;
+    if (applicantAge <= 55) return 0.00055;
+    if (applicantAge <= 60) return 0.00085;
+    if (applicantAge <= 65) return 0.00130;
+    if (applicantAge <= 70) return 0.00220;
+    if (applicantAge <= 75) return 0.00350;
+    return 0.00550;
   };
 
   const generateRecommendations = () => {
@@ -138,9 +155,11 @@ export default function MainLayout() {
     const { income, birthDate, dependents = 0 } = simulationData;
     if (!income || !birthDate) return [];
 
-    const age = calculateAge(birthDate);
-    const maxTermByAge = (80 - age) * 12;
-    const term = Math.min(420, maxTermByAge);
+    const ageInMonths = calculateAgeInMonths(birthDate);
+    const ageInYears = Math.floor(ageInMonths / 12);
+    
+    const maxTermByAge = 966 - ageInMonths;
+    const term = Math.min(420, Math.max(0, maxTermByAge));
     
     // TAXA DE JUROS EFETIVOS A.A
     let iAnnual = 0.0847; // Default Faixa 3
@@ -155,6 +174,14 @@ export default function MainLayout() {
     const minSalary = 1518;
     const incomeLimit = minSalary * 5;
     const propertyLimit = 320000;
+
+    const mipRate = getMipRateByAge(ageInYears);
+    const dfiRate = 0.000138;
+    const adminFee = 25;
+
+    const calculateInsuranceAndFees = (financed: number, evalValue: number) => {
+      return adminFee + (evalValue * dfiRate) + (financed * mipRate);
+    };
 
     const calculatePMT = (pv: number, i: number, n: number) => {
       return pv * ( (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1) );
@@ -173,13 +200,18 @@ export default function MainLayout() {
       }
 
       const subsidizedEvaluation = evaluationValue - projFederalSubsidy;
-      let financedAmount = subsidizedEvaluation * 0.80;
-      let currentParcel = calculatePMT(financedAmount, iMonthly, term);
+      let financedAmount = subsidizedEvaluation * 0.80; // Cota 80%
+      
+      const pmtFactor = (iMonthly * Math.pow(1 + iMonthly, term)) / (Math.pow(1 + iMonthly, term) - 1);
+      const denominator = pmtFactor + mipRate;
+      const maxFinancedByIncome = (maxInstallment - adminFee - (subsidizedEvaluation * dfiRate)) / denominator;
 
-      while (currentParcel > maxInstallment && financedAmount > 0) {
-        financedAmount -= (evaluationValue * 0.01);
-        currentParcel = calculatePMT(financedAmount, iMonthly, term);
+      if (maxFinancedByIncome < financedAmount) {
+         financedAmount = Math.max(0, maxFinancedByIncome);
       }
+
+      let purePMT = calculatePMT(financedAmount, iMonthly, term);
+      let currentParcel = purePMT + calculateInsuranceAndFees(financedAmount, subsidizedEvaluation);
 
       const propertyValue = prop.valor_imovel_construtora || evaluationValue;
       const calculatedEntry = (propertyValue - projFederalSubsidy) - financedAmount;
