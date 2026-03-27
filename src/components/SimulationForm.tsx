@@ -81,6 +81,35 @@ export default function SimulationForm({ property: initialProperty, onSimulation
     return age;
   };
 
+  const calculateAgeInMonths = (birthDateStr: string) => {
+    let birth = new Date(birthDateStr);
+    if (birthDateStr.includes('/') && birthDateStr.length === 10) {
+      const [day, month, year] = birthDateStr.split('/');
+      birth = new Date(Number(year), Number(month) - 1, Number(day));
+    }
+    if (isNaN(birth.getTime())) return 0; // Invalid date
+
+    const today = new Date();
+    const years = today.getFullYear() - birth.getFullYear();
+    const months = today.getMonth() - birth.getMonth();
+    return years * 12 + months;
+  };
+
+  const getMipRateByAge = (applicantAge: number) => {
+    if (applicantAge <= 25) return 0.00011;
+    if (applicantAge <= 30) return 0.00012;
+    if (applicantAge <= 35) return 0.00014;
+    if (applicantAge <= 40) return 0.00018;
+    if (applicantAge <= 45) return 0.00025;
+    if (applicantAge <= 50) return 0.00036;
+    if (applicantAge <= 55) return 0.00055;
+    if (applicantAge <= 60) return 0.00085;
+    if (applicantAge <= 65) return 0.00130;
+    if (applicantAge <= 70) return 0.00220;
+    if (applicantAge <= 75) return 0.00350;
+    return 0.00550;
+  };
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ''); 
     if (value.length > 8) value = value.slice(0, 8); 
@@ -115,12 +144,13 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       const evaluationValue = selectedProperty.valor_avaliacao_caixa || 200000; // Fallback
       const income = formData.income;
       const age = calculateAge(formData.birthDate);
+      const ageInMonths = calculateAgeInMonths(formData.birthDate);
       
       // PRAZO MÁXIMO
       // Regra 1: 420 meses
-      // Regra 2: idade + prazo <= 80 anos
-      const maxTermByAge = (80 - age) * 12;
-      const term = Math.min(420, maxTermByAge);
+      // Regra 2: idade + prazo <= 80 anos e 6 meses (966 meses)
+      const maxTermByAge = 966 - ageInMonths;
+      const term = Math.min(420, Math.max(0, maxTermByAge));
 
       // PROGRAMA HABITACIONAL
       let program = "Minha Casa Minha Vida";
@@ -205,32 +235,36 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       // NOVO VALOR BASE DE AVALIAÇÃO (Descontado o Subsídio Federal)
       const subsidizedEvaluation = evaluationValue - projFederalSubsidy;
 
-      // FINANCIAMENTO MÁXIMO (80% da avaliação já subsidiada)
-      let financedAmount = subsidizedEvaluation * 0.80;
+      // FINANCIAMENTO MÁXIMO (Cota e Renda)
+      let financedAmount = subsidizedEvaluation * 0.80; // Cota de 80% máxima
       const maxInstallment = income * 0.30;
 
-      // Estimativa Rápida de Seguros (MIP/DFI) e Taxas Administrativas Caixa
-      // Fundamental para que a parcela gerada não estoure os 30% na Caixa
+      const mipRate = getMipRateByAge(age);
+      const dfiRate = 0.000138;
+      const adminFee = 25;
+
+      // Estimativa Exata de Seguros (MIP/DFI) e Taxas Administrativas Caixa
       const calculateInsuranceAndFees = (financed: number, evalValue: number) => {
-        // Taxa de Admnistração fixa (~R$ 25) + Seguros baseados no valor do imóvel e valor financiado
-        return 25 + (evalValue * 0.00013) + (financed * 0.00008); 
+        return adminFee + (evalValue * dfiRate) + (financed * mipRate); 
       };
 
       // Cálculo PMT (Sistema PRICE)
-      // PMT = PV * ( i * (1 + i)^n ) / ( (1 + i)^n - 1 )
       const calculatePMT = (pv: number, i: number, n: number) => {
         return pv * ( (i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1) );
       };
 
+      // CÁLCULO ALGÉBRICO EXATO DA CAPACIDADE DE FINANCIAMENTO PELA RENDA
+      const pmtFactor = (iMonthly * Math.pow(1 + iMonthly, term)) / (Math.pow(1 + iMonthly, term) - 1);
+      const denominator = pmtFactor + mipRate;
+      const maxFinancedByIncome = (maxInstallment - adminFee - (subsidizedEvaluation * dfiRate)) / denominator;
+
+      // Se a renda não permitir financiar 80%, desce para a capacidade máxima real
+      if (maxFinancedByIncome < financedAmount) {
+         financedAmount = Math.max(0, maxFinancedByIncome);
+      }
+
       let purePMT = calculatePMT(financedAmount, iMonthly, term);
       let currentParcel = purePMT + calculateInsuranceAndFees(financedAmount, subsidizedEvaluation);
-
-      // AJUSTE AUTOMÁTICO DA ENTRADA
-      while (currentParcel > maxInstallment && financedAmount > 0) {
-        financedAmount -= 50; // Passos menores (50) para maior precisão (reduz excesso de recusa)
-        purePMT = calculatePMT(financedAmount, iMonthly, term);
-        currentParcel = purePMT + calculateInsuranceAndFees(financedAmount, subsidizedEvaluation);
-      }
 
       const propertyValue = selectedProperty.valor_imovel_construtora || evaluationValue;
       // Entrada é o Valor do Imóvel (Construtora) - Subsídio Federal - O que for financiado.
@@ -259,7 +293,7 @@ PERFIL DO CLIENTE:
 - 3 Anos de FGTS: ${formData.has3YearsFGTS ? 'Sim (-0.5% a.a.)' : 'Não'}
 
 PARÂMETROS DE FINANCIAMENTO:
-- Prazo Máximo Real: ${term} meses (Regra: min(420, (80 - ${age}) * 12))
+- Prazo Máximo Real: ${term} meses (Regra: min(420, 966 meses - Idade(${ageInMonths} m)))
 - Comprometimento de Renda Máximo (30%): ${formatCurrency(maxInstallment)}
 - Taxa de Juros (${(iAnnual * 100).toFixed(2)}% a.a. ef.): ${(iMonthly * 100).toFixed(4)}% a.m.
 
