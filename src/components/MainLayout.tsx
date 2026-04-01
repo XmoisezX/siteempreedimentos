@@ -175,9 +175,10 @@ export default function MainLayout() {
     const incomeLimit = minSalary * 5;
     const propertyLimit = 320000;
 
+    const isMCMV = income <= 8600; // rough approximation for MCMV Faixas 1 a 3
     const mipRate = getMipRateByAge(ageInYears);
-    const dfiRate = 0.000138;
-    const adminFee = 25;
+    const dfiRate = (isMCMV && income <= 4700) ? 0.0001207 : 0.000138;
+    const adminFee = (isMCMV && income <= 4700) ? 0 : 25;
 
     const calculateInsuranceAndFees = (financed: number, evalValue: number) => {
       return adminFee + (evalValue * dfiRate) + (financed * mipRate);
@@ -204,7 +205,7 @@ export default function MainLayout() {
       
       const pmtFactor = (iMonthly * Math.pow(1 + iMonthly, term)) / (Math.pow(1 + iMonthly, term) - 1);
       const denominator = pmtFactor + mipRate;
-      const maxFinancedByIncome = (maxInstallment - adminFee - (subsidizedEvaluation * dfiRate)) / denominator;
+      const maxFinancedByIncome = (maxInstallment - adminFee - (evaluationValue * dfiRate)) / denominator;
 
       if (maxFinancedByIncome < financedAmount) {
          financedAmount = Math.max(0, maxFinancedByIncome);

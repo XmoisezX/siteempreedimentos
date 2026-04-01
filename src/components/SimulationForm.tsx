@@ -239,9 +239,10 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       let financedAmount = subsidizedEvaluation * 0.80; // Cota de 80% máxima
       const maxInstallment = income * 0.30;
 
+      const isMCMV = program === "Minha Casa Minha Vida";
       const mipRate = getMipRateByAge(age);
-      const dfiRate = 0.000138;
-      const adminFee = 25;
+      const dfiRate = (isMCMV && income <= 4700) ? 0.0001207 : 0.000138; // Trava exata da simulação Habitacional Mais
+      const adminFee = (isMCMV && income <= 4700) ? 0 : 25; // Isento p/ Faixa 1 e 2
 
       // Estimativa Exata de Seguros (MIP/DFI) e Taxas Administrativas Caixa
       const calculateInsuranceAndFees = (financed: number, evalValue: number) => {
@@ -256,7 +257,8 @@ export default function SimulationForm({ property: initialProperty, onSimulation
       // CÁLCULO ALGÉBRICO EXATO DA CAPACIDADE DE FINANCIAMENTO PELA RENDA
       const pmtFactor = (iMonthly * Math.pow(1 + iMonthly, term)) / (Math.pow(1 + iMonthly, term) - 1);
       const denominator = pmtFactor + mipRate;
-      const maxFinancedByIncome = (maxInstallment - adminFee - (subsidizedEvaluation * dfiRate)) / denominator;
+      // DFI é calculado sempre sobre a avaliação original da Caixa (evaluationValue), não subsidiada
+      const maxFinancedByIncome = (maxInstallment - adminFee - (evaluationValue * dfiRate)) / denominator;
 
       // Se a renda não permitir financiar 80%, desce para a capacidade máxima real
       if (maxFinancedByIncome < financedAmount) {
