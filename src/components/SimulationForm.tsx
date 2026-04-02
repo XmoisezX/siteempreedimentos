@@ -431,7 +431,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
           
           {/* Progress Bar */}
           <div className="flex space-x-2 mb-8 px-2">
-            {[1, 2, 3, 4].map(i => (
+            {[1, 2, 3].map(i => (
               <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${step >= i ? 'bg-imperio-blue-900' : 'bg-slate-100'}`} />
             ))}
           </div>
@@ -609,21 +609,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
               </div>
             )}
 
-            {step === 4 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="flex items-center justify-center py-10">
-                   <div className="text-center space-y-4">
-                      <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                         <CheckCircle2 className="w-10 h-10" />
-                      </div>
-                      <h4 className="text-lg font-black text-slate-900 uppercase italic">Tudo Pronto!</h4>
-                      <p className="text-xs text-slate-500 font-medium max-w-[200px] mx-auto leading-relaxed">
-                        Clique abaixo para gerar sua simulação personalizada baseada nas regras da Caixa.
-                      </p>
-                   </div>
-                </div>
-              </div>
-            )}
+
           </div>
 
           {/* Navigation */}
@@ -638,11 +624,11 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
               </button>
             )}
             
-            {step < 4 ? (
+            {step < 3 ? (
               <button 
                 type="button"
                 onClick={handleNext}
-                disabled={(step === 1 && (!formData.name || !formData.phone || !isNameValid || !isValidPhone)) || (step === 2 && !selectedProperty) || (step === 3 && (formData.birthDate.length < 10 || !isAdult))}
+                disabled={(step === 1 && (!formData.name || !formData.phone || !isNameValid || !isValidPhone)) || (step === 2 && !selectedProperty)}
                 className="flex-1 bg-imperio-blue-900 text-white font-black uppercase text-xs tracking-widest py-4 rounded-2xl shadow-xl shadow-imperio-blue-900/20 flex items-center justify-center space-x-2 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <span>Próximo Passo</span>
@@ -651,7 +637,8 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
             ) : (
               <button 
                 type="submit"
-                className="flex-1 bg-imperio-gold-500 text-white font-black uppercase text-sm tracking-widest py-4 rounded-2xl shadow-xl shadow-imperio-gold-500/20 flex items-center justify-center space-x-3 active:scale-[0.98] transition-all"
+                disabled={formData.birthDate.length < 10 || !isAdult}
+                className="flex-1 bg-imperio-gold-500 text-white font-black uppercase text-sm tracking-widest py-4 rounded-2xl shadow-xl shadow-imperio-gold-500/20 flex items-center justify-center space-x-3 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 <span>Simular Agora</span>
