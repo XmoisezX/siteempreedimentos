@@ -342,20 +342,25 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
       const broker = await getRotatedBroker();
       setAssignedBroker(broker);
 
+      const formatBirthDateForDb = (dateString: string) => {
+        if (!dateString || !dateString.includes('/')) return dateString;
+        const [day, month, year] = dateString.split('/');
+        return `${year}-${month}-${day}`;
+      };
+
       // Salvar simulação e Lead no banco de dados
       supabase.from('simulations').insert([{
         property_id: selectedProperty.id,
         name: formData.name,
         phone: formData.phone,
         income: income,
-        birth_date: formData.birthDate,
+        birth_date: formatBirthDateForDb(formData.birthDate),
         dependents: formData.hasDependentOrSecondBuyer ? 1 : 0,
         has_second_buyer: formData.hasDependentOrSecondBuyer,
         broker_name: broker.name
       }]).then(({ error }) => {
         if (error) {
            console.error("Erro ao salvar simulação:", error);
-           alert("ERRO CAIXA DE DADOS: " + error.message);
         }
       });
 
