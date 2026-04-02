@@ -353,7 +353,10 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         has_second_buyer: formData.hasDependentOrSecondBuyer,
         broker_name: broker.name
       }]).then(({ error }) => {
-        if (error) console.error("Erro ao salvar simulação:", error);
+        if (error) {
+           console.error("Erro ao salvar simulação:", error);
+           alert("ERRO CAIXA DE DADOS: " + error.message);
+        }
       });
 
       if (onSimulationComplete) {
