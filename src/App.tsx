@@ -26,7 +26,7 @@ function App() {
       <PixelTracker />
       <Routes>
         <Route path="/" element={<MainLayout />} />
-        <Route path="/imovel/:id" element={<MainLayout />} />
+        <Route path="/:propertyName/:id" element={<MainLayout />} />
       </Routes>
     </div>
   )

@@ -9,6 +9,7 @@ import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
 import { getRotatedBroker } from '../lib/brokers';
 import { getOptimizedImageUrl } from '../lib/imageOptimization';
+import { generateSlug } from '../lib/slugify';
 import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon } from 'lucide-react';
 
 export default function MainLayout() {
@@ -398,7 +399,7 @@ export default function MainLayout() {
                 category={activeTab} 
                 properties={filteredPropertiesMap}
                 onHover={setHoveredPropertyId}
-                onSelect={(p) => navigate(p ? "/imovel/" + p.id : "/")}
+                onSelect={(p) => navigate(p ? "/" + generateSlug(p.name) + "/" + p.id : "/")}
               />
             )}
           </div>
@@ -421,7 +422,7 @@ export default function MainLayout() {
              hoveredPropertyId={hoveredPropertyId} 
              category={activeTab}
              properties={filteredPropertiesMap}
-             onSelect={(p) => navigate(p ? "/imovel/" + p.id : "/")}
+             onSelect={(p) => navigate(p ? "/" + generateSlug(p.name) + "/" + p.id : "/")}
            />
            
            {/* Overlay Map Filter Panel (Slide down do topo do mapa) */}
@@ -571,7 +572,7 @@ export default function MainLayout() {
                         {recommendations.map((rec, idx) => (
                           <div 
                             key={rec.property.id} 
-                            onClick={() => navigate("/imovel/" + rec.property.id)}
+                            onClick={() => navigate("/" + generateSlug(rec.property.name) + "/" + rec.property.id)}
                             className="bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group hover:scale-[1.03] hover:shadow-2xl hover:shadow-imperio-gold-500/10 hover:border-white/20"
                             style={{ animationDelay: `${idx * 100}ms` }}
                           >
@@ -717,7 +718,7 @@ export default function MainLayout() {
                        {recommendations.map((rec) => (
                          <div 
                            key={rec.property.id} 
-                           onClick={() => navigate("/imovel/" + rec.property.id)}
+                           onClick={() => navigate("/" + generateSlug(rec.property.name) + "/" + rec.property.id)}
                            className="bg-slate-800/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group"
                          >
                             <img src={getOptimizedImageUrl(rec.property.image_url, 200)} className="w-16 h-16 rounded-2xl object-cover shadow-lg" alt="Thumb" loading="lazy" decoding="async" />
