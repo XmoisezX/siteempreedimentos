@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import type { Property } from '../data/mockData';
 import L from 'leaflet';
 import { Bed, Maximize, Bath } from 'lucide-react';
+import { getOptimizedImageUrl } from '../lib/imageOptimization';
 
 // Fix for default Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -143,7 +144,7 @@ export default function PropertyMap({ hoveredPropertyId, category, properties, o
                 >
                   <div className="bg-white rounded-xl shadow-2xl border border-slate-100 overflow-hidden w-64 transform transition-all duration-300 scale-in-center">
                   <div className="relative h-32">
-                    <img src={property.image_url} className="w-full h-full object-cover" alt={property.name} loading="lazy" decoding="async" />
+                    <img src={getOptimizedImageUrl(property.image_url, 400)} className="w-full h-full object-cover" alt={property.name} loading="lazy" decoding="async" />
                     <div className="absolute top-2 right-2 bg-imperio-blue-900 text-white px-2 py-1 rounded-md text-[10px] font-bold shadow-lg">
                       {priceStr}
                     </div>

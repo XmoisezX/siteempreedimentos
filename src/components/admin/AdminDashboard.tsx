@@ -6,6 +6,7 @@ import LoginForm from './LoginForm';
 import SimulationsList from './SimulationsList';
 import BrokersList from './BrokersList';
 import { Plus, Trash2, Edit3, LogOut, Loader2, FileText, User, Building2, Users, MessageCircle } from 'lucide-react';
+import { getOptimizedImageUrl } from '../../lib/imageOptimization';
 
 export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [session, setSession] = useState<any>(null);
@@ -189,7 +190,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   {properties.map((prop: Property) => (
                     <div key={prop.id} className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
                       <div className="h-44 bg-slate-200 relative overflow-hidden">
-                        <img src={prop.image_url} alt={prop.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async" />
+                        <img src={getOptimizedImageUrl(prop.image_url, 400)} alt={prop.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         
                         <div className="absolute top-3 right-3 flex space-x-1 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">

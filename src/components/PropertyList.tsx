@@ -2,6 +2,7 @@
 
 import type { Property } from '../data/mockData';
 import { MapPin, Bed, Bath, Move, Building2 } from 'lucide-react';
+import { getOptimizedImageUrl } from '../lib/imageOptimization';
 
 interface PropertyListProps {
   category: 'apartments' | 'houses';
@@ -24,9 +25,9 @@ export default function PropertyList({ category, properties, onHover, onSelect }
           className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-100 p-3 md:p-4 transition-all duration-300 cursor-pointer flex flex-row group"
         >
           {/* Imagem do Card */}
-          <div className="w-28 h-28 md:w-32 md:h-32 rounded-xl overflow-hidden mr-3 md:mr-4 shrink-0 relative">
+          <div className="w-28 h-28 md:w-32 md:h-32 rounded-xl overflow-hidden mr-3 md:mr-4 shrink-0 relative flex items-center justify-center bg-slate-100">
             <img 
-              src={property.image_url} 
+              src={getOptimizedImageUrl(property.image_url, 400)} 
               alt={property.name} 
               loading="lazy"
               decoding="async"
