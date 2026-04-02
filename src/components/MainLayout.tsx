@@ -828,7 +828,7 @@ export default function MainLayout() {
                <div className="w-full h-full overflow-auto relative bg-slate-100 flex items-start justify-center">
                  <div style={{ width: `${pdfZoom * 100}%`, height: `${pdfZoom * 100}%`, transition: 'all 0.3s ease' }} className="flex">
                    <iframe 
-                     src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}`} 
+                     src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}&rm=minimal&t=${new Date().getTime()}`} 
                      style={{ 
                        transform: `scale(${pdfZoom})`, 
                        transformOrigin: 'top left', 
