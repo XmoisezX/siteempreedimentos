@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import PropertyList from './PropertyList';
 import PropertyMap from './PropertyMap';
 import SimulationForm from './SimulationForm';
@@ -10,6 +11,8 @@ import { getRotatedBroker } from '../lib/brokers';
 import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon } from 'lucide-react';
 
 export default function MainLayout() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'apartments' | 'houses'>('apartments');
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
   const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
@@ -38,6 +41,9 @@ export default function MainLayout() {
 
 
   const handleWhatsAppAction = async () => {
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'Lead');
+    }
     const message = encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os empreendimentos.');
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
@@ -106,6 +112,23 @@ export default function MainLayout() {
       setSimulationData(null); // Reset when changing properties
     }
   }, [selectedProperty]);
+
+  // Sync selectedProperty with URL ID
+  useEffect(() => {
+    if (id && properties.length > 0) {
+      const prop = properties.find(p => p.id === id);
+      if (prop) {
+        setSelectedProperty(prop);
+        if (typeof window.fbq === 'function') {
+          window.fbq('trackCustom', 'ViewProperty', { content_name: prop.name, content_ids: [prop.id] });
+        }
+      } else {
+        setSelectedProperty(undefined);
+      }
+    } else if (!id) {
+      setSelectedProperty(undefined);
+    }
+  }, [id, properties]);
 
   async function fetchProperties() {
     setLoading(true);
@@ -374,7 +397,7 @@ export default function MainLayout() {
                 category={activeTab} 
                 properties={filteredPropertiesMap}
                 onHover={setHoveredPropertyId}
-                onSelect={setSelectedProperty}
+                onSelect={(p) => navigate(p ? "/imovel/" + p.id : "/")}
               />
             )}
           </div>
@@ -397,7 +420,7 @@ export default function MainLayout() {
              hoveredPropertyId={hoveredPropertyId} 
              category={activeTab}
              properties={filteredPropertiesMap}
-             onSelect={setSelectedProperty}
+             onSelect={(p) => navigate(p ? "/imovel/" + p.id : "/")}
            />
            
            {/* Overlay Map Filter Panel (Slide down do topo do mapa) */}
@@ -524,7 +547,7 @@ export default function MainLayout() {
               <div className="md:hidden sticky top-0 w-full bg-white/95 backdrop-blur-2xl z-[150] border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm">
                  <h2 className="text-sm font-black text-slate-900 uppercase tracking-tighter truncate pr-4">{selectedProperty.name}</h2>
                  <button 
-                   onClick={() => setSelectedProperty(undefined)}
+                   onClick={() => navigate("/")}
                    className="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors p-2 rounded-full shrink-0 flex items-center justify-center"
                  >
                    <CloseIcon className="w-5 h-5" />
@@ -547,7 +570,7 @@ export default function MainLayout() {
                         {recommendations.map((rec, idx) => (
                           <div 
                             key={rec.property.id} 
-                            onClick={() => setSelectedProperty(rec.property)}
+                            onClick={() => navigate("/imovel/" + rec.property.id)}
                             className="bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group hover:scale-[1.03] hover:shadow-2xl hover:shadow-imperio-gold-500/10 hover:border-white/20"
                             style={{ animationDelay: `${idx * 100}ms` }}
                           >
@@ -582,7 +605,7 @@ export default function MainLayout() {
               {/* Informações e Formulário */}
               <div className="w-full md:w-1/2 flex flex-col bg-white relative overflow-visible md:overflow-x-hidden md:overflow-y-auto md:flex-1 md:min-h-0 scrollbar-hide">
                 <button 
-                  onClick={() => setSelectedProperty(undefined)}
+                  onClick={() => navigate("/")}
                   className="absolute top-4 right-4 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white p-2 rounded-full transition-all hidden md:flex items-center justify-center z-50 group"
                   title="Fechar"
                 >
@@ -693,7 +716,7 @@ export default function MainLayout() {
                        {recommendations.map((rec) => (
                          <div 
                            key={rec.property.id} 
-                           onClick={() => setSelectedProperty(rec.property)}
+                           onClick={() => navigate("/imovel/" + rec.property.id)}
                            className="bg-slate-800/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group"
                          >
                             <img src={rec.property.image_url} className="w-16 h-16 rounded-2xl object-cover shadow-lg" alt="Thumb" loading="lazy" decoding="async" />
