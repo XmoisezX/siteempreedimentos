@@ -3,6 +3,7 @@ import { Calculator, ChevronRight, ChevronLeft, Wallet, User, Calendar, CheckCir
 import type { Property } from '../data/mockData';
 import { supabase } from '../lib/supabaseClient';
 import { getRotatedBroker } from '../lib/brokers';
+import { analytics } from '../lib/analytics';
 
 interface SimulationFormProps {
   property?: Property;
@@ -363,6 +364,8 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
            console.error("Erro ao salvar simulação:", error);
         }
       });
+
+      analytics.simulationComplete(selectedProperty.name, financedAmount);
 
       if (onSimulationComplete) {
         onSimulationComplete(formData);
@@ -787,6 +790,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
             href={whatsappLink} 
             target="_blank" 
             rel="noopener noreferrer"
+            onClick={() => analytics.whatsAppSimulationClick(selectedProperty?.name || '')}
             className="group relative block"
           >
             <div className="absolute -inset-1 bg-emerald-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-all"></div>

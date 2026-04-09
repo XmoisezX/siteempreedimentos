@@ -1,12 +1,14 @@
 import { getRotatedBroker } from '../lib/brokers';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { analytics } from '../lib/analytics';
 
 export default function WhatsAppButton() {
   const [loading, setLoading] = useState(false);
   const message = encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os empreendimentos.');
 
   async function handleWhatsAppClick() {
+    analytics.whatsAppFloatingClick();
     setLoading(true);
     try {
       const broker = await getRotatedBroker();

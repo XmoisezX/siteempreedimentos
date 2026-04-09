@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 import { getRotatedBroker } from '../lib/brokers';
 import { getOptimizedImageUrl } from '../lib/imageOptimization';
 import { generateSlug } from '../lib/slugify';
+import { analytics } from '../lib/analytics';
 import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon } from 'lucide-react';
 
 export default function MainLayout() {
@@ -46,6 +47,7 @@ export default function MainLayout() {
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'Lead');
     }
+    analytics.whatsAppMenuClick();
     const message = encodeURIComponent('Olá! Gostaria de falar com um especialista sobre os empreendimentos.');
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
@@ -124,6 +126,7 @@ export default function MainLayout() {
         if (typeof window.fbq === 'function') {
           window.fbq('trackCustom', 'ViewProperty', { content_name: prop.name, content_ids: [prop.id] });
         }
+        analytics.propertyView(prop.name, prop.id);
       } else {
         setSelectedProperty(undefined);
       }
@@ -673,6 +676,7 @@ export default function MainLayout() {
                             <div className="absolute -inset-1 bg-gradient-to-r from-imperio-gold-500 to-amber-400 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
                             <button 
                               onClick={() => {
+                                analytics.bookClick(selectedProperty.name);
                                 setIsLoadingPdf(true);
                                 setPdfZoom(1);
                                 setShowPdfViewer(true);
@@ -689,7 +693,10 @@ export default function MainLayout() {
                         <div className="relative group">
                           <div className="absolute -inset-1 bg-gradient-to-r from-imperio-blue-900 to-slate-800 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
                           <button 
-                            onClick={() => setShowSimulator(true)}
+                            onClick={() => {
+                              analytics.simulationStart(selectedProperty.name);
+                              setShowSimulator(true);
+                            }}
                             className="relative w-full py-4 bg-imperio-blue-900 hover:bg-black text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
                           >
                             <Calculator className="w-5 h-5" />
