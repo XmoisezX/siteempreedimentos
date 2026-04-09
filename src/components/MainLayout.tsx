@@ -561,7 +561,7 @@ export default function MainLayout() {
 
               {/* Imagem em Destaque e Recomendações */}
               <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden ${showSimulator || simulationData ? 'hidden md:flex' : 'flex'}`}>
-                <img src={selectedProperty.image_url} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" />
+                <img src={getOptimizedImageUrl(selectedProperty.image_url, 1200)} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" />
                 <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
                 
                 {/* Recomendações Overlay */}
