@@ -8,7 +8,8 @@ export function getOptimizedImageUrl(url: string | undefined, width: number = 80
   // Apenas altera a URL se pertencer ao Supabase Storage (object/public)
   if (url.includes('/object/public/')) {
     // Altera o endpoint de 'object' para 'render/image' e adiciona parâmetros de transformação
-    return url.replace('/object/public/', '/render/image/public/') + `?width=${width}&quality=80`;
+    // Mantemos cover para que preencha a div sem distorcer.
+    return url.replace('/object/public/', '/render/image/public/') + `?width=${width}&resize=cover&quality=80`;
   }
   
   // Retorna a URL original caso seja de fontes externas ou base64

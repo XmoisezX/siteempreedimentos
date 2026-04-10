@@ -24,6 +24,7 @@ export default function MainLayout() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSimulator, setShowSimulator] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   
   // PDF Viewer State
   const [showPdfViewer, setShowPdfViewer] = useState(false);
@@ -114,6 +115,7 @@ export default function MainLayout() {
     if (selectedProperty) {
       setShowSimulator(false);
       setSimulationData(null); // Reset when changing properties
+      setImageLoaded(false); // Reset image load state
     }
   }, [selectedProperty]);
 
@@ -560,9 +562,28 @@ export default function MainLayout() {
               </div>
 
               {/* Imagem em Destaque e Recomendações */}
-              <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden ${showSimulator || simulationData ? 'hidden md:flex' : 'flex'}`}>
-                <img src={getOptimizedImageUrl(selectedProperty.image_url, 1200)} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" />
-                <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
+              <div className={`w-full md:w-1/2 h-[250px] md:h-auto min-h-[250px] md:min-h-0 relative flex-col justify-center items-center shrink-0 overflow-hidden bg-slate-100 ${showSimulator || simulationData ? 'hidden md:flex' : 'flex'}`}>
+                {/* Low Quality Image Placeholder */}
+                <img src={getOptimizedImageUrl(selectedProperty.image_url, 400)} alt={selectedProperty.name} className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60" />
+                
+                {/* High Resolution Image */}
+                <img 
+                  src={getOptimizedImageUrl(selectedProperty.image_url, 1200)} 
+                  alt={selectedProperty.name} 
+                  onLoad={() => setImageLoaded(true)}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`} 
+                  loading="eager" 
+                  decoding="async" 
+                />
+                
+                {/* Loader Spinner while not loaded */}
+                {!imageLoaded && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10 transition-opacity duration-300">
+                    <Loader2 className="w-8 h-8 md:w-10 md:h-10 text-imperio-gold-500 animate-spin opacity-80 drop-shadow-md" />
+                  </div>
+                )}
+                
+                <div className={`absolute inset-0 transition-opacity duration-700 pointer-events-none z-10 ${simulationData ? 'bg-black/85 backdrop-blur-md' : 'bg-gradient-to-t from-black/60 via-transparent to-transparent'}`} />
                 
                 {/* Recomendações Overlay */}
                 {simulationData && recommendations.length > 0 && (
@@ -579,7 +600,7 @@ export default function MainLayout() {
                             className="bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group hover:scale-[1.03] hover:shadow-2xl hover:shadow-imperio-gold-500/10 hover:border-white/20"
                             style={{ animationDelay: `${idx * 100}ms` }}
                           >
-                             <img src={getOptimizedImageUrl(rec.property.image_url, 200)} className="w-20 h-20 rounded-2xl object-cover shadow-lg group-hover:shadow-imperio-gold-500/20 transition-all" alt="Thumb" loading="lazy" decoding="async" />
+                             <img src={getOptimizedImageUrl(rec.property.image_url, 200)} className="w-20 h-20 rounded-2xl object-cover shadow-lg group-hover:shadow-imperio-gold-500/20 transition-all shrink-0" alt={rec.property.name} loading="lazy" decoding="async" />
                              <div className="flex-1">
                                 <h5 className="text-white text-sm font-black uppercase tracking-tight line-clamp-2 group-hover:text-imperio-gold-500 transition-colors leading-tight mb-1">{rec.property.name}</h5>
                                 {rec.property.neighborhood && (
@@ -677,9 +698,14 @@ export default function MainLayout() {
                             <button 
                               onClick={() => {
                                 analytics.bookClick(selectedProperty.name);
-                                setIsLoadingPdf(true);
-                                setPdfZoom(1);
-                                setShowPdfViewer(true);
+                                if (window.innerWidth <= 768) {
+                                  // No mobile, abre direto na nova aba para evitar erros do iframe
+                                  window.open(selectedProperty.pdf_url, '_blank');
+                                } else {
+                                  setIsLoadingPdf(true);
+                                  setPdfZoom(1);
+                                  setShowPdfViewer(true);
+                                }
                               }}
                               className="relative w-full py-4 bg-gradient-to-r from-imperio-gold-500 to-amber-500 hover:from-imperio-gold-600 hover:to-amber-600 text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/20 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
                             >
@@ -728,7 +754,7 @@ export default function MainLayout() {
                            onClick={() => navigate("/" + generateSlug(rec.property.name) + "/" + rec.property.id)}
                            className="bg-slate-800/60 hover:bg-slate-800/80 border border-white/10 p-5 rounded-[24px] cursor-pointer transition-all duration-300 backdrop-blur-xl flex items-center space-x-5 group"
                          >
-                            <img src={getOptimizedImageUrl(rec.property.image_url, 200)} className="w-16 h-16 rounded-2xl object-cover shadow-lg" alt="Thumb" loading="lazy" decoding="async" />
+                            <img src={getOptimizedImageUrl(rec.property.image_url, 200)} className="w-16 h-16 rounded-2xl object-cover shadow-lg shrink-0" alt={rec.property.name} loading="lazy" decoding="async" />
                             <div className="flex-1">
                                <h5 className="text-white text-[11px] font-black uppercase tracking-tight line-clamp-2 leading-tight mb-1">{rec.property.name}</h5>
                                {rec.property.neighborhood && (
@@ -836,7 +862,7 @@ export default function MainLayout() {
                <div className="w-full h-full overflow-auto relative bg-slate-100 flex items-start justify-center">
                  <div style={{ width: `${pdfZoom * 100}%`, height: `${pdfZoom * 100}%`, transition: 'all 0.3s ease' }} className="flex">
                    <iframe 
-                     src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}&rm=minimal&t=${new Date().getTime()}`} 
+                     src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}&rm=minimal`} 
                      style={{ 
                        transform: `scale(${pdfZoom})`, 
                        transformOrigin: 'top left', 
