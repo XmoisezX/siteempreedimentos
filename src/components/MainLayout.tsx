@@ -698,14 +698,9 @@ export default function MainLayout() {
                             <button 
                               onClick={() => {
                                 analytics.bookClick(selectedProperty.name);
-                                if (window.innerWidth <= 768) {
-                                  // No mobile, abre direto na nova aba para evitar erros do iframe
-                                  window.open(selectedProperty.pdf_url, '_blank');
-                                } else {
-                                  setIsLoadingPdf(true);
-                                  setPdfZoom(1);
-                                  setShowPdfViewer(true);
-                                }
+                                setIsLoadingPdf(true);
+                                setPdfZoom(1);
+                                setShowPdfViewer(true);
                               }}
                               className="relative w-full py-4 bg-gradient-to-r from-imperio-gold-500 to-amber-500 hover:from-imperio-gold-600 hover:to-amber-600 text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/20 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
                             >
