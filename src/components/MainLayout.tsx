@@ -841,8 +841,8 @@ export default function MainLayout() {
                  </div>
                )}
 
-               {/* Controle de Zoom */}
-               {!isLoadingPdf && (
+               {/* Controle de Zoom (apenas para Android/Google Viewer, navegadores nativos já possuem) */}
+               {!isLoadingPdf && /Android/i.test(navigator.userAgent) && (
                  <div className="absolute top-4 right-4 flex flex-col bg-slate-900/80 backdrop-blur-md rounded-xl p-1 z-20 shadow-xl border border-white/10">
                    <button onClick={() => setPdfZoom(z => Math.min(z + 0.25, 3))} className="p-2 text-white hover:bg-white/20 rounded-lg transition-all" title="Aumentar Zoom">
                      <Plus className="w-5 h-5" />
@@ -855,17 +855,17 @@ export default function MainLayout() {
                )}
 
                <div className="w-full h-full overflow-auto relative bg-slate-100 flex items-start justify-center">
-                 <div style={{ width: `${pdfZoom * 100}%`, height: `${pdfZoom * 100}%`, transition: 'all 0.3s ease' }} className="flex">
+                 <div style={{ width: /Android/i.test(navigator.userAgent) ? `${pdfZoom * 100}%` : '100%', height: /Android/i.test(navigator.userAgent) ? `${pdfZoom * 100}%` : '100%', transition: 'all 0.3s ease' }} className="flex">
                    <iframe 
-                     src={`https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}&rm=minimal`} 
-                     style={{ 
+                     src={/Android/i.test(navigator.userAgent) ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}&rm=minimal` : selectedProperty.pdf_url} 
+                     style={/Android/i.test(navigator.userAgent) ? { 
                        transform: `scale(${pdfZoom})`, 
                        transformOrigin: 'top left', 
                        width: `${100 / pdfZoom}%`, 
                        height: `${100 / pdfZoom}%`,
                        transition: 'all 0.3s ease'
-                     }}
-                     className={`border-none shadow-2xl bg-white ${isLoadingPdf ? 'opacity-0' : 'opacity-100'}`}
+                     } : undefined}
+                     className={`border-none shadow-2xl bg-white w-full h-full ${isLoadingPdf ? 'opacity-0' : 'opacity-100'}`}
                      title="Property Book"
                      onLoad={() => setIsLoadingPdf(false)}
                    />
