@@ -123,6 +123,7 @@ export default function SimulationForm({ property: initialProperty, onSimulation
   };
 
   const downloadDebugLog = () => {
+    analytics.downloadSimulationClick(selectedProperty?.name || '');
     if (!result?.debugLog) return;
     const blob = new Blob([result.debugLog], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -393,6 +394,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
   const isAdult = !formData.birthDate || formData.birthDate.length < 10 || calculateAge(formData.birthDate) >= 18;
 
   const handleShareSimulation = async () => {
+    analytics.shareSimulationClick(selectedProperty?.name || '');
     if (!result || !selectedProperty) return;
     
     const shareText = `*Simulação de Financiamento - ${selectedProperty.name}*\n\n` +
