@@ -30,7 +30,7 @@ export default function MainLayout() {
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
   const [isLoadingPdf, setIsLoadingPdf] = useState(true);
-  const [pdfZoom, setPdfZoom] = useState(0.7);
+  const [pdfZoom, setPdfZoom] = useState(1);
 
   // Filters State
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -699,7 +699,7 @@ export default function MainLayout() {
                               onClick={() => {
                                 analytics.bookClick(selectedProperty.name);
                                 setIsLoadingPdf(true);
-                                setPdfZoom(0.7);
+                                setPdfZoom(1);
                                 setShowPdfViewer(true);
                               }}
                               className="relative w-full py-4 bg-gradient-to-r from-imperio-gold-500 to-amber-500 hover:from-imperio-gold-600 hover:to-amber-600 text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/20 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
@@ -841,8 +841,8 @@ export default function MainLayout() {
                  </div>
                )}
 
-               {/* Controle de Zoom Multiplataforma */}
-               {!isLoadingPdf && (
+               {/* Controle de Zoom Multiplataforma (Somente Mobile) */}
+               {!isLoadingPdf && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
                  <div className="absolute top-4 right-4 flex flex-col bg-slate-900/80 backdrop-blur-md rounded-xl p-1 z-20 shadow-xl border border-white/10">
                    <button onClick={() => setPdfZoom(z => Math.min(z + 0.1, 3))} className="p-2 text-white hover:bg-white/20 rounded-lg transition-all" title="Aumentar Zoom">
                      <Plus className="w-5 h-5" />
@@ -855,16 +855,16 @@ export default function MainLayout() {
                )}
 
                <div className="w-full h-full overflow-auto relative bg-slate-100 flex items-start justify-center">
-                 <div style={{ width: `${pdfZoom * 100}%`, height: `${pdfZoom * 100}%`, transition: 'all 0.3s ease' }} className="flex">
+                 <div style={{ width: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? `${pdfZoom * 100}%` : '100%', height: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? `${pdfZoom * 100}%` : '100%', transition: 'all 0.3s ease' }} className="flex">
                    <iframe 
-                     src={/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}&rm=minimal` : `${selectedProperty.pdf_url}#zoom=75`} 
-                     style={{ 
+                     src={/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(selectedProperty.pdf_url)}&rm=minimal` : `${selectedProperty.pdf_url}#zoom=70`} 
+                     style={/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? { 
                        transform: `scale(${pdfZoom})`, 
                        transformOrigin: 'top left', 
                        width: `${100 / pdfZoom}%`, 
                        height: `${100 / pdfZoom}%`,
                        transition: 'all 0.3s ease'
-                     }}
+                     } : { width: '100%', height: '100%' }}
                      className={`border-none shadow-2xl bg-white w-full h-full ${isLoadingPdf ? 'opacity-0' : 'opacity-100'}`}
                      title="Property Book"
                      onLoad={() => setIsLoadingPdf(false)}
