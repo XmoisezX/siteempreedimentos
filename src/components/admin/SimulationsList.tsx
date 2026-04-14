@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Loader2, Trash2, Calendar, Phone, User, DollarSign, Building2, Download, X as CloseIcon, Calculator, ChevronDown } from 'lucide-react';
+import { Loader2, Trash2, Calendar, Phone, User, DollarSign, Building2, Download, X as CloseIcon, Calculator, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface SimulationData {
   id: string;
@@ -25,6 +25,7 @@ export default function SimulationsList() {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [viewingSim, setViewingSim] = useState<SimulationData | null>(null);
   const [brokers, setBrokers] = useState<{name: string}[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   useEffect(() => {
     fetchSimulations();
@@ -103,8 +104,15 @@ export default function SimulationsList() {
     const data = filteredSimulations.filter(s => selectedLeads.includes(s.id));
     let csv = "Cliente,Telefone,Data Nascimento,Dependentes,Composicao Renda,Renda,Corretor,Empreendimento,Data Solicitacao\n";
     data.forEach(s => {
+      // Find the grouped lead logic to extract correct broker
+      const phoneClean = s.phone.replace(/\D/g, '');
+      const nameClean = s.name.trim().toLowerCase();
+      const groupKey = `${phoneClean}-${nameClean}`;
+      const group = groupedSimulations.find(g => g.groupKey === groupKey);
+      const realBrokerName = group ? (group.simulations[group.simulations.length - 1].broker_name || 'Ag. Geral') : 'Ag. Geral';
+
       const bdate = new Date(s.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-      csv += `"${s.name}","${s.phone}",${bdate},${s.dependents},${s.has_second_buyer?'Sim':'Nao'},${s.income},"${s.broker_name||'Ag. Geral'}","${s.properties?.name||'N/D'}",${formatDate(s.created_at)}\n`;
+      csv += `"${s.name}","${s.phone}",${bdate},${s.dependents},${s.has_second_buyer?'Sim':'Nao'},${s.income},"${realBrokerName}","${s.properties?.name||'N/D'}",${formatDate(s.created_at)}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -266,6 +274,54 @@ Gerado em tempo real pelo Admin.
     );
   });
 
+  interface GroupedLead {
+    groupKey: string;
+    phone: string;
+    name: string;
+    simulations: SimulationData[];
+  }
+
+  const groupedSimulations = useMemo(() => {
+    const groups: Record<string, GroupedLead> = {};
+    
+    filteredSimulations.forEach(sim => {
+      const phoneClean = sim.phone.replace(/\D/g, '');
+      const nameClean = sim.name.trim().toLowerCase();
+      const groupKey = `${phoneClean}-${nameClean}`;
+      
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          groupKey,
+          phone: sim.phone,
+          name: sim.name,
+          simulations: []
+        };
+      }
+      groups[groupKey].simulations.push(sim);
+    });
+    
+    return Object.values(groups).sort((a, b) => {
+      const dateA = new Date(a.simulations[0].created_at).getTime();
+      const dateB = new Date(b.simulations[0].created_at).getTime();
+      return dateB - dateA;
+    });
+  }, [filteredSimulations]);
+
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupKey) ? prev.filter(k => k !== groupKey) : [...prev, groupKey]
+    );
+  };
+
+  const handleSelectGroup = (group: GroupedLead, checked: boolean) => {
+    const groupIds = group.simulations.map(s => s.id);
+    if (checked) {
+      setSelectedLeads(prev => Array.from(new Set([...prev, ...groupIds])));
+    } else {
+      setSelectedLeads(prev => prev.filter(id => !groupIds.includes(id)));
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 space-y-4">
@@ -291,7 +347,7 @@ Gerado em tempo real pelo Admin.
              onChange={(e) => setSearchTerm(e.target.value)}
           />
           <div className="bg-imperio-blue-900/10 text-imperio-blue-900 px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap hidden sm:block">
-            {filteredSimulations.length} {filteredSimulations.length === 1 ? 'Lead' : 'Leads'}
+            {groupedSimulations.length} {groupedSimulations.length === 1 ? 'Lead Único' : 'Leads Únicos'}
           </div>
         </div>
       </div>
@@ -368,7 +424,7 @@ Gerado em tempo real pelo Admin.
                     type="checkbox" 
                     onChange={handleSelectAll} 
                     checked={selectedLeads.length > 0 && selectedLeads.length === filteredSimulations.length} 
-                    className="rounded border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900 w-4 h-4" 
+                    className="rounded border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900 w-4 h-4 cursor-pointer" 
                   />
                 </th>
                 <th className="p-4 font-medium">Cliente</th>
@@ -382,97 +438,186 @@ Gerado em tempo real pelo Admin.
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-slate-50">
-              {filteredSimulations.map((sim) => (
-                <tr key={sim.id} className={`hover:bg-slate-50/50 transition-colors group ${selectedLeads.includes(sim.id) ? 'bg-imperio-blue-900/5' : ''}`}>
-                  <td className="p-4 pl-6">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedLeads.includes(sim.id)} 
-                      onChange={(e) => handleSelectOne(sim.id, e.target.checked)} 
-                      className="rounded border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900 w-4 h-4" 
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-imperio-gold-500/10 flex items-center justify-center shrink-0">
-                        <span className="text-imperio-gold-600 font-black text-xs">
-                          {sim.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 line-clamp-1">{sim.name}</span>
-                        <div className="flex items-center space-x-2 text-[10px] text-slate-400 mt-0.5 font-medium">
-                           <span title="Dependentes">Dep: {sim.dependents}</span>
-                           <span>•</span>
-                           <span title="Segundo Comprador">{sim.has_second_buyer ? 'Casal/Compos. Renda' : 'Individual'}</span>
+              {groupedSimulations.map((group) => {
+                const isExpanded = expandedGroups.includes(group.groupKey);
+                const isMultiple = group.simulations.length > 1;
+                const primarySim = group.simulations[0];
+                const oldestSim = group.simulations[group.simulations.length - 1]; // First simulation ever done decides the broker
+                const realBrokerName = oldestSim.broker_name || 'Ag. Geral';
+                
+                const groupIds = group.simulations.map(s => s.id);
+                const allSelected = groupIds.every(id => selectedLeads.includes(id));
+                const someSelected = groupIds.some(id => selectedLeads.includes(id)) && !allSelected;
+
+                return (
+                  <React.Fragment key={group.groupKey}>
+                    <tr className={`hover:bg-slate-50/50 transition-colors group/row ${allSelected ? 'bg-imperio-blue-900/5' : ''}`}>
+                      <td className="p-4 pl-6">
+                        <input 
+                          type="checkbox" 
+                          checked={allSelected} 
+                          ref={el => { if (el) el.indeterminate = someSelected }}
+                          onChange={(e) => handleSelectGroup(group, e.target.checked)} 
+                          className="rounded border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900 w-4 h-4 cursor-pointer" 
+                        />
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-imperio-gold-500/10 flex items-center justify-center shrink-0">
+                            <span className="text-imperio-gold-600 font-black text-xs">
+                              {primarySim.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-900 line-clamp-1">{primarySim.name}</span>
+                            <div className="flex items-center space-x-2 text-[10px] text-slate-400 mt-0.5 font-medium">
+                               <span title="Dependentes">Dep: {primarySim.dependents}</span>
+                               <span>•</span>
+                               <span title="Segundo Comprador">{primarySim.has_second_buyer ? 'Casal/Compos.' : 'Individual'}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col">
-                      <span className="text-slate-700 font-bold whitespace-nowrap text-[11px]">
-                        {sim.birth_date ? new Date(sim.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/D'}
-                      </span>
-                      {sim.birth_date && (
-                        <span className="text-[9px] text-slate-400 font-medium">
-                          {calculateAge(sim.birth_date)} anos
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col">
+                          <span className="text-slate-700 font-bold whitespace-nowrap text-[11px]">
+                            {primarySim.birth_date ? new Date(primarySim.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/D'}
+                          </span>
+                          {primarySim.birth_date && (
+                            <span className="text-[9px] text-slate-400 font-medium">
+                              {calculateAge(primarySim.birth_date)} anos
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-2 text-slate-600 font-medium whitespace-nowrap">
+                          <Phone className="w-3.5 h-3.5 text-slate-400" />
+                          <a href={`https://wa.me/55${primarySim.phone.replace(/\D/g, '')}`} target="_blank" className="hover:text-emerald-500 transition-colors">
+                            {primarySim.phone}
+                          </a>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                         {isMultiple ? (
+                           <span className="bg-imperio-gold-500/20 text-imperio-gold-700 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest flex items-center w-max">
+                             {group.simulations.length} Sim. do Lead
+                           </span>
+                         ) : (
+                           <div className="flex items-center space-x-2">
+                              <Building2 className="w-3.5 h-3.5 text-imperio-blue-900/50 shrink-0" />
+                              <span className="font-bold text-imperio-blue-900 text-xs truncate max-w-[150px]" title={primarySim.properties?.name || 'Imóvel Excluído'}>
+                                {primarySim.properties?.name || 'Imóvel Excluído'}
+                              </span>
+                           </div>
+                         )}
+                      </td>
+                      <td className="p-4">
+                        <span className="text-slate-600 font-bold whitespace-nowrap text-[11px] uppercase tracking-wider bg-slate-100/80 px-2.5 py-1.5 rounded-md border border-slate-200/50">
+                          {realBrokerName}
                         </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center space-x-2 text-slate-600 font-medium whitespace-nowrap">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" />
-                      <a href={`https://wa.me/55${sim.phone.replace(/\D/g, '')}`} target="_blank" className="hover:text-emerald-500 transition-colors">
-                        {sim.phone}
-                      </a>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                     <div className="flex items-center space-x-2">
-                        <Building2 className="w-3.5 h-3.5 text-imperio-blue-900/50 shrink-0" />
-                        <span className="font-bold text-imperio-blue-900 text-xs truncate max-w-[150px]" title={sim.properties?.name || 'Imóvel Excluído'}>
-                          {sim.properties?.name || 'Imóvel Excluído'}
-                        </span>
-                     </div>
-                  </td>
-                  <td className="p-4">
-                    <span className="text-slate-600 font-bold whitespace-nowrap text-[11px] uppercase tracking-wider bg-slate-100 px-2.5 py-1 rounded-md">
-                      {sim.broker_name || 'Ag. Geral'}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center space-x-1.5 font-black text-slate-700">
-                      <DollarSign className="w-3.5 h-3.5 text-green-500" />
-                      <span>{formatCurrency(sim.income)}</span>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center space-x-2 text-slate-500 text-xs font-medium whitespace-nowrap">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{formatDate(sim.created_at)}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 pr-6 text-right flex items-center justify-end space-x-1">
-                    <button 
-                      onClick={() => setViewingSim(sim)}
-                      className="p-2 text-slate-400 hover:text-imperio-blue-900 hover:bg-slate-100 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                      title="Ver Demonstrativo da Simulação"
-                    >
-                      <Calculator className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(sim.id)}
-                      disabled={deleting === sim.id}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                      title="Excluir Lead"
-                    >
-                      {deleting === sim.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                      </td>
+                      <td className="p-4">
+                        {isMultiple && new Set(group.simulations.map(s => s.income)).size > 1 ? (
+                          <span className="text-slate-400 italic text-[11px] font-bold">Rendas Variáveis</span>
+                        ) : (
+                          <div className="flex items-center space-x-1.5 font-black text-slate-700">
+                            <DollarSign className="w-3.5 h-3.5 text-green-500" />
+                            <span>{formatCurrency(primarySim.income)}</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center space-x-2 text-slate-500 text-xs font-medium whitespace-nowrap">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{formatDate(primarySim.created_at)}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 pr-6 text-right flex items-center justify-end space-x-1">
+                        {isMultiple ? (
+                          <button onClick={() => toggleGroup(group.groupKey)} className="p-2 text-slate-400 hover:text-imperio-blue-900 hover:bg-slate-100 rounded-lg transition-all" title="Ver todas as simulações deste cliente">
+                             <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-imperio-blue-900' : ''}`} />
+                          </button>
+                        ) : (
+                          <>
+                            <button 
+                              onClick={() => setViewingSim(primarySim)}
+                              className="p-2 text-slate-400 hover:text-imperio-blue-900 hover:bg-slate-100 rounded-lg transition-all opacity-0 group-hover/row:opacity-100"
+                              title="Ver Demonstrativo da Simulação"
+                            >
+                              <Calculator className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(primarySim.id)}
+                              disabled={deleting === primarySim.id}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover/row:opacity-100 disabled:opacity-50"
+                              title="Excluir Lead"
+                            >
+                              {deleting === primarySim.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+
+                    {/* Simulações Filhas Expandidas */}
+                    {isExpanded && isMultiple && group.simulations.map((sim, index) => (
+                      <tr key={sim.id} className={`bg-slate-50 border-l-4 border-slate-200 hover:border-imperio-blue-900 transition-all ${selectedLeads.includes(sim.id) ? 'bg-imperio-blue-900/5 border-imperio-blue-900' : ''}`}>
+                        <td className="p-3 pl-6">
+                           <input 
+                             type="checkbox" 
+                             checked={selectedLeads.includes(sim.id)} 
+                             onChange={(e) => handleSelectOne(sim.id, e.target.checked)} 
+                             className="rounded border-slate-300 text-imperio-blue-900 focus:ring-imperio-blue-900 w-4 h-4" 
+                           />
+                        </td>
+                        <td className="p-3" colSpan={3}>
+                           <div className="flex items-center text-slate-400 text-[11px] uppercase tracking-widest pl-4">
+                             <ChevronRight className="w-4 h-4 mr-1 opacity-50" />
+                             <span className="font-bold">Simulação {group.simulations.length - index}</span>
+                           </div>
+                        </td>
+                        <td className="p-3">
+                           <div className="flex items-center space-x-2">
+                              <Building2 className="w-3.5 h-3.5 text-imperio-blue-900/50 shrink-0" />
+                              <span className="font-bold text-imperio-blue-900 text-xs truncate max-w-[150px]" title={sim.properties?.name || 'Imóvel Excluído'}>
+                                {sim.properties?.name || 'Imóvel Excluído'}
+                              </span>
+                           </div>
+                        </td>
+                        <td className="p-3">
+                          <span className="text-slate-600 font-bold whitespace-nowrap text-[10px] uppercase tracking-wider bg-white border border-slate-100 px-2 py-0.5 rounded-md">
+                            {realBrokerName}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span className="font-black text-slate-700 text-xs">{formatCurrency(sim.income)}</span>
+                        </td>
+                        <td className="p-3">
+                          <span className="text-slate-500 text-[11px] font-medium whitespace-nowrap">{formatDate(sim.created_at)}</span>
+                        </td>
+                        <td className="p-3 pr-6 text-right flex items-center justify-end space-x-1">
+                          <button 
+                            onClick={() => setViewingSim(sim)}
+                            className="p-2 text-slate-400 hover:text-imperio-blue-900 hover:bg-slate-100 rounded-lg transition-all"
+                            title="Ver Demonstrativo"
+                          >
+                            <Calculator className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(sim.id)}
+                            disabled={deleting === sim.id}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                            title="Excluir"
+                          >
+                            {deleting === sim.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

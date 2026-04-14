@@ -341,8 +341,34 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         debugLog: debugLog
       });
 
-      const broker = await getRotatedBroker();
-      setAssignedBroker(broker);
+      // Identificar corretor: se for lead recorrente (mesmo telefone e nome), mantém o corretor original
+      let finalBroker: { name: string, phone: string } | null = null;
+
+      const { data: previousSimulations } = await supabase
+         .from('simulations')
+         .select('broker_name')
+         .eq('phone', formData.phone)
+         .ilike('name', formData.name.trim())
+         .order('created_at', { ascending: false })
+         .limit(1);
+
+      if (previousSimulations && previousSimulations.length > 0 && previousSimulations[0].broker_name) {
+         const { data: brokerRecord } = await supabase
+            .from('brokers')
+            .select('name, phone')
+            .eq('name', previousSimulations[0].broker_name)
+            .single();
+
+         if (brokerRecord) {
+             finalBroker = { name: brokerRecord.name, phone: brokerRecord.phone };
+         }
+      }
+
+      if (!finalBroker) {
+         finalBroker = await getRotatedBroker();
+      }
+
+      setAssignedBroker(finalBroker);
 
       const formatBirthDateForDb = (dateString: string) => {
         if (!dateString || !dateString.includes('/')) return dateString;
@@ -359,7 +385,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         birth_date: formatBirthDateForDb(formData.birthDate),
         dependents: formData.hasDependentOrSecondBuyer ? 1 : 0,
         has_second_buyer: formData.hasDependentOrSecondBuyer,
-        broker_name: broker.name
+        broker_name: finalBroker.name
       }]).then(({ error }) => {
         if (error) {
            console.error("Erro ao salvar simulação:", error);
