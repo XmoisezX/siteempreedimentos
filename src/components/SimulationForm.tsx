@@ -385,7 +385,8 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         birth_date: formatBirthDateForDb(formData.birthDate),
         dependents: formData.hasDependentOrSecondBuyer ? 1 : 0,
         has_second_buyer: formData.hasDependentOrSecondBuyer,
-        broker_name: finalBroker.name
+        broker_name: finalBroker.name,
+        status: 'Aguardando Contato'
       }]).then(({ error }) => {
         if (error) {
            console.error("Erro ao salvar simulação:", error);
