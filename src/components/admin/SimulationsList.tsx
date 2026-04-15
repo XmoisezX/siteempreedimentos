@@ -13,6 +13,7 @@ interface SimulationData {
   created_at: string;
   property_id: string;
   broker_name?: string;
+  status?: string;
   properties: any;
 }
 
@@ -139,6 +140,15 @@ export default function SimulationsList() {
       fetchSimulations();
     } else alert('Erro: ' + error.message);
   };
+
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    setSimulations(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+    const { error } = await supabase.from('simulations').update({ status: newStatus }).eq('id', id);
+    if (error) {
+      console.error('Erro ao atualizar status:', error);
+    }
+  };
+
 
   const generateSimLog = (sim: SimulationData) => {
     const property = sim.properties;
@@ -434,6 +444,7 @@ Gerado em tempo real pelo Admin.
                 <th className="p-4 font-medium">Corretor(a)</th>
                 <th className="p-4 font-medium">Renda Familiar</th>
                 <th className="p-4 font-medium">Data Simulação</th>
+                <th className="p-4 font-medium text-center">Status</th>
                 <th className="p-4 pr-6 text-right font-medium">Ação</th>
               </tr>
             </thead>
@@ -533,6 +544,20 @@ Gerado em tempo real pelo Admin.
                           <span>{formatDate(primarySim.created_at)}</span>
                         </div>
                       </td>
+                      <td className="p-4 text-center">
+                         <select 
+                            value={primarySim.status || 'Aguardando Contato'}
+                            onChange={(e) => handleUpdateStatus(primarySim.id, e.target.value)}
+                            className={`text-[10px] uppercase font-black tracking-widest px-2.5 py-1.5 rounded-md border outline-none cursor-pointer transition-colors max-w-[140px] appearance-none text-center ${
+                              (primarySim.status || 'Aguardando Contato') === 'Atendido' 
+                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                                : 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                            }`}
+                         >
+                            <option value="Aguardando Contato">AGUARDANDO Fila</option>
+                            <option value="Atendido">ATENDIDO</option>
+                         </select>
+                      </td>
                       <td className="p-4 pr-6 text-right flex items-center justify-end space-x-1">
                         {isMultiple ? (
                           <button onClick={() => toggleGroup(group.groupKey)} className="p-2 text-slate-400 hover:text-imperio-blue-900 hover:bg-slate-100 rounded-lg transition-all" title="Ver todas as simulações deste cliente">
@@ -595,6 +620,15 @@ Gerado em tempo real pelo Admin.
                         </td>
                         <td className="p-3">
                           <span className="text-slate-500 text-[11px] font-medium whitespace-nowrap">{formatDate(sim.created_at)}</span>
+                        </td>
+                        <td className="p-3 text-center">
+                           <span className={`text-[9px] uppercase font-bold tracking-widest px-2 py-1 rounded-md ${
+                              (sim.status || 'Aguardando Contato') === 'Atendido' 
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                                : 'bg-yellow-50 text-yellow-600 border border-yellow-100'
+                            }`}>
+                              {sim.status || 'Aguardando Contato'}
+                           </span>
                         </td>
                         <td className="p-3 pr-6 text-right flex items-center justify-end space-x-1">
                           <button 

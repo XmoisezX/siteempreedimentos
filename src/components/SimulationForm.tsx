@@ -377,7 +377,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
       };
 
       // Salvar simulação e Lead no banco de dados
-      supabase.from('simulations').insert([{
+      const payload = {
         property_id: selectedProperty.id,
         name: formData.name,
         phone: formData.phone,
@@ -385,10 +385,17 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         birth_date: formatBirthDateForDb(formData.birthDate),
         dependents: formData.hasDependentOrSecondBuyer ? 1 : 0,
         has_second_buyer: formData.hasDependentOrSecondBuyer,
-        broker_name: finalBroker.name
-      }]).then(({ error }) => {
+        broker_name: finalBroker.name,
+        status: 'Aguardando Contato'
+      };
+
+      supabase.from('simulations').insert([payload]).then(async ({ error }) => {
         if (error) {
-           console.error("Erro ao salvar simulação:", error);
+           console.error("Erro ao salvar simulação com status:", error);
+           // Fallback temporário caso a coluna 'status' não exista no Supabase
+           const fallbackPayload = { ...payload };
+           delete (fallbackPayload as any).status;
+           await supabase.from('simulations').insert([fallbackPayload]);
         }
       });
 
