@@ -849,7 +849,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                   <button 
                     onClick={handleShareSimulation}
                     type="button"
-                    className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-3 border border-slate-200 rounded-xl text-[9px] font-black text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all uppercase tracking-widest active:scale-95"
+                    className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-2 border border-slate-200 rounded-xl text-[8px] sm:text-[9px] font-black text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all uppercase tracking-wider active:scale-95 min-w-0"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                     <span>Compartilhar</span>
@@ -858,7 +858,7 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
                   <button 
                     onClick={downloadDebugLog}
                     type="button"
-                    className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-3 border border-slate-200 rounded-xl text-[9px] font-black text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all uppercase tracking-widest active:scale-95"
+                    className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 px-2 border border-slate-200 rounded-xl text-[8px] sm:text-[9px] font-black text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all uppercase tracking-wider active:scale-95 min-w-0"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Demonstrativo</span>

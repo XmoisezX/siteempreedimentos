@@ -9,6 +9,7 @@ interface PropertyListProps {
   properties: Property[];
   onHover: (id: string | null) => void;
   onSelect: (property: Property) => void;
+  showEstimatedParcel?: boolean;
 }
 
 // Estimativa simples de parcela para exibição nos cards
@@ -25,7 +26,7 @@ const formatCurrencyShort = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 };
 
-export default function PropertyList({ category, properties, onHover, onSelect }: PropertyListProps) {
+export default function PropertyList({ category, properties, onHover, onSelect, showEstimatedParcel = false }: PropertyListProps) {
   const filteredProperties = properties.filter((p) => p.type === category);
 
   return (
@@ -87,10 +88,12 @@ export default function PropertyList({ category, properties, onHover, onSelect }
                  <span className="text-xs md:text-sm font-black text-imperio-blue-900 leading-none">
                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(property.valor_imovel_construtora || property.price)}
                  </span>
-                 <span className="flex items-center text-[8px] md:text-[9px] font-bold text-emerald-600 mt-0.5 leading-none">
-                   <Calculator className="w-2.5 h-2.5 mr-0.5" />
-                   ~{formatCurrencyShort(estimatedParcel)}/mês*
-                 </span>
+                 {showEstimatedParcel && (
+                   <span className="flex items-center text-[8px] md:text-[9px] font-bold text-emerald-600 mt-0.5 leading-none">
+                     <Calculator className="w-2.5 h-2.5 mr-0.5" />
+                     ~{formatCurrencyShort(estimatedParcel)}/mês*
+                   </span>
+                 )}
                </div>
              </div>
           </div>

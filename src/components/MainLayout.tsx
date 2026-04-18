@@ -11,6 +11,7 @@ import { getRotatedBroker } from '../lib/brokers';
 import { getOptimizedImageUrl } from '../lib/imageOptimization';
 import { generateSlug } from '../lib/slugify';
 import { analytics } from '../lib/analytics';
+import { getSiteSettings } from '../lib/siteSettings';
 import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon, TrendingDown, ArrowRight, Shield } from 'lucide-react';
 
 export default function MainLayout() {
@@ -26,6 +27,7 @@ export default function MainLayout() {
   const [showSimulator, setShowSimulator] = useState(false);
   const [showHeroSimulator, setShowHeroSimulator] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showEstimatedParcel, setShowEstimatedParcel] = useState(false);
   
   // PDF Viewer State
   const [showPdfViewer, setShowPdfViewer] = useState(false);
@@ -90,6 +92,7 @@ export default function MainLayout() {
 
   useEffect(() => {
     fetchProperties();
+    getSiteSettings().then(s => setShowEstimatedParcel(s.show_estimated_parcel));
   }, []);
 
   const filteredPropertiesMap = useMemo(() => {
@@ -460,6 +463,7 @@ export default function MainLayout() {
                   properties={filteredPropertiesMap}
                   onHover={setHoveredPropertyId}
                   onSelect={(p) => navigate(p ? "/" + generateSlug(p.name) + "/" + p.id : "/")}
+                  showEstimatedParcel={showEstimatedParcel}
                 />
               </>
             )}
@@ -831,22 +835,6 @@ export default function MainLayout() {
                   </div>
                 )}
 
-                {/* Sticky CTA Mobile - Barra fixa no rodapé do modal */}
-                {!showSimulator && !simulationData && (
-                  <div className="md:hidden sticky bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-[160] animate-in slide-in-from-bottom-4 duration-500">
-                    <button 
-                      onClick={() => {
-                        analytics.simulationStart(selectedProperty.name);
-                        setShowSimulator(true);
-                      }}
-                      className="w-full py-3.5 bg-gradient-to-r from-imperio-gold-500 to-amber-500 text-white font-black text-xs uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/30 active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
-                    >
-                      <Calculator className="w-4 h-4" />
-                      <span>Simular Parcelas Agora</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -877,6 +865,18 @@ export default function MainLayout() {
                 >
                   <Download className="w-5 h-5" />
                 </a>
+                <button 
+                  onClick={() => {
+                    setShowPdfViewer(false);
+                    analytics.simulationStart(selectedProperty.name);
+                    setShowSimulator(true);
+                  }}
+                  className="flex items-center space-x-1.5 px-3 py-2 bg-imperio-gold-500 hover:bg-imperio-gold-600 text-white rounded-lg transition-all text-xs font-bold"
+                  title="Simular Parcelas"
+                >
+                  <Calculator className="w-4 h-4" />
+                  <span className="hidden sm:inline">Simular Parcelas</span>
+                </button>
                 <button 
                   onClick={() => setIsPdfFullscreen(!isPdfFullscreen)}
                   className="p-2 bg-white/10 hover:bg-white text-white hover:text-slate-900 rounded-lg transition-all"

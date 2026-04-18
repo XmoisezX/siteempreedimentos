@@ -5,8 +5,9 @@ import PropertyForm from './PropertyForm';
 import LoginForm from './LoginForm';
 import SimulationsList from './SimulationsList';
 import BrokersList from './BrokersList';
-import { Plus, Trash2, Edit3, LogOut, Loader2, FileText, User, Building2, Users, MessageCircle } from 'lucide-react';
+import { Plus, Trash2, Edit3, LogOut, Loader2, FileText, User, Building2, Users, MessageCircle, Settings, ToggleLeft, ToggleRight } from 'lucide-react';
 import { getOptimizedImageUrl } from '../../lib/imageOptimization';
+import { getSiteSettings, updateSiteSetting } from '../../lib/siteSettings';
 
 export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [session, setSession] = useState<any>(null);
@@ -18,6 +19,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [editingProperty, setEditingProperty] = useState<Property | undefined>(undefined);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [showEstimatedParcel, setShowEstimatedParcel] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   useEffect(() => {
     // Check initial auth state
@@ -35,6 +38,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Load site settings
+  useEffect(() => {
+    if (session) {
+      getSiteSettings().then(s => setShowEstimatedParcel(s.show_estimated_parcel));
+    }
+  }, [session]);
 
   async function fetchProperties() {
     setLoading(true);
@@ -268,6 +278,45 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 </div>
               )}
             </>
+          )}
+
+          {/* Configurações do Site */}
+          {activeTab === 'properties' && (
+            <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <Settings className="w-5 h-5 text-slate-400" />
+                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Configurações do Site</h3>
+              </div>
+              
+              <div className="flex items-center justify-between py-3 border-t border-slate-100">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Mostrar parcela estimada nos cards</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Exibe uma estimativa de parcela mensal (~R$ X/mês) abaixo do preço nos cards de imóveis da página principal.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    setSettingsLoading(true);
+                    const newValue = !showEstimatedParcel;
+                    const success = await updateSiteSetting('show_estimated_parcel', newValue);
+                    if (success) {
+                      setShowEstimatedParcel(newValue);
+                    } else {
+                      alert('Erro ao salvar configuração. Verifique se a tabela site_settings existe no Supabase.');
+                    }
+                    setSettingsLoading(false);
+                  }}
+                  disabled={settingsLoading}
+                  className="shrink-0 ml-4 disabled:opacity-50 transition-all"
+                  title={showEstimatedParcel ? 'Desativar' : 'Ativar'}
+                >
+                  {showEstimatedParcel ? (
+                    <ToggleRight className="w-10 h-10 text-emerald-500" />
+                  ) : (
+                    <ToggleLeft className="w-10 h-10 text-slate-300" />
+                  )}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </main>
