@@ -1,7 +1,7 @@
 
 
 import type { Property } from '../data/mockData';
-import { MapPin, Bed, Bath, Move, Building2, Calculator } from 'lucide-react';
+import { MapPin, Bed, Bath, Move, Building2, Calculator, Flame } from 'lucide-react';
 import { getOptimizedImageUrl } from '../lib/imageOptimization';
 
 interface PropertyListProps {
@@ -10,6 +10,7 @@ interface PropertyListProps {
   onHover: (id: string | null) => void;
   onSelect: (property: Property) => void;
   showEstimatedParcel?: boolean;
+  simulationCounts?: Record<string, number>;
 }
 
 // Estimativa simples de parcela para exibição nos cards
@@ -26,13 +27,29 @@ const formatCurrencyShort = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 };
 
-export default function PropertyList({ category, properties, onHover, onSelect, showEstimatedParcel = false }: PropertyListProps) {
+export default function PropertyList({ category, properties, onHover, onSelect, showEstimatedParcel = false, simulationCounts = {} }: PropertyListProps) {
   const filteredProperties = properties.filter((p) => p.type === category);
+  
+  // Ordenar por popularidade (mais simulações primeiro)
+  const sortedProperties = [...filteredProperties].sort((a, b) => {
+    const countA = simulationCounts[a.id] || 0;
+    const countB = simulationCounts[b.id] || 0;
+    return countB - countA;
+  });
+
+  // IDs dos top 2 mais acessados (com pelo menos 1 simulação)
+  const top2Ids = new Set(
+    sortedProperties
+      .filter(p => (simulationCounts[p.id] || 0) > 0)
+      .slice(0, 2)
+      .map(p => p.id)
+  );
 
   return (
     <div className="space-y-4">
-      {filteredProperties.map((property) => {
+      {sortedProperties.map((property) => {
         const estimatedParcel = estimateMonthlyPayment(property.valor_imovel_construtora || property.price || 200000);
+        const isPopular = top2Ids.has(property.id);
         
         return (
         <div 
@@ -40,7 +57,7 @@ export default function PropertyList({ category, properties, onHover, onSelect, 
           onPointerEnter={(e) => e.pointerType === 'mouse' && onHover(property.id)}
           onPointerLeave={(e) => e.pointerType === 'mouse' && onHover(null)}
           onClick={() => onSelect(property)}
-          className="bg-white rounded-2xl shadow-sm hover:shadow-xl border border-slate-100 p-3 md:p-4 transition-all duration-300 cursor-pointer flex flex-row group"
+          className={`bg-white rounded-2xl shadow-sm hover:shadow-xl border p-3 md:p-4 transition-all duration-300 cursor-pointer flex flex-row group ${isPopular ? 'border-imperio-gold-500/30 ring-1 ring-imperio-gold-500/10' : 'border-slate-100'}`}
         >
           {/* Imagem do Card */}
           <div className="w-28 h-28 md:w-32 md:h-32 rounded-xl overflow-hidden mr-3 md:mr-4 shrink-0 relative flex items-center justify-center bg-slate-100">
@@ -51,6 +68,13 @@ export default function PropertyList({ category, properties, onHover, onSelect, 
               decoding="async"
               className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
             />
+            {/* Badge Mais Procurado */}
+            {isPopular && (
+              <div className="absolute top-1.5 left-1.5 flex items-center space-x-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-lg shadow-lg z-10">
+                <Flame className="w-2.5 h-2.5" />
+                <span className="text-[7px] md:text-[8px] font-black uppercase tracking-wide">Mais Procurado</span>
+              </div>
+            )}
           </div>
 
           {/* Dados do Empreendimento */}
@@ -103,4 +127,3 @@ export default function PropertyList({ category, properties, onHover, onSelect, 
     </div>
   );
 }
-

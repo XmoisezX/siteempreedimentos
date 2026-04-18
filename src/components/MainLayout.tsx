@@ -28,6 +28,7 @@ export default function MainLayout() {
   const [showHeroSimulator, setShowHeroSimulator] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showEstimatedParcel, setShowEstimatedParcel] = useState(false);
+  const [simulationCounts, setSimulationCounts] = useState<Record<string, number>>({});
   
   // PDF Viewer State
   const [showPdfViewer, setShowPdfViewer] = useState(false);
@@ -93,6 +94,21 @@ export default function MainLayout() {
   useEffect(() => {
     fetchProperties();
     getSiteSettings().then(s => setShowEstimatedParcel(s.show_estimated_parcel));
+    // Buscar contagem de simulações por imóvel para ranking de popularidade
+    supabase
+      .from('simulations')
+      .select('property_id')
+      .then(({ data }) => {
+        if (data) {
+          const counts: Record<string, number> = {};
+          data.forEach((row: any) => {
+            if (row.property_id) {
+              counts[row.property_id] = (counts[row.property_id] || 0) + 1;
+            }
+          });
+          setSimulationCounts(counts);
+        }
+      });
   }, []);
 
   const filteredPropertiesMap = useMemo(() => {
@@ -418,7 +434,7 @@ export default function MainLayout() {
                       </div>
                       
                       <h2 className="text-lg md:text-xl font-black text-white leading-tight tracking-tight mb-1">
-                        Seu Apartamento em Pelotas
+                        {activeTab === 'apartments' ? 'Seu Apartamento em Pelotas' : 'Sua Casa em Pelotas'}
                       </h2>
                       <p className="text-2xl md:text-3xl font-black text-imperio-gold-500 italic tracking-tighter leading-none mb-3">
                         a partir de R$ 690/mês*
@@ -464,6 +480,7 @@ export default function MainLayout() {
                   onHover={setHoveredPropertyId}
                   onSelect={(p) => navigate(p ? "/" + generateSlug(p.name) + "/" + p.id : "/")}
                   showEstimatedParcel={showEstimatedParcel}
+                  simulationCounts={simulationCounts}
                 />
               </>
             )}
