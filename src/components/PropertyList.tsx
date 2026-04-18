@@ -1,7 +1,7 @@
 
 
 import type { Property } from '../data/mockData';
-import { MapPin, Bed, Bath, Move, Building2 } from 'lucide-react';
+import { MapPin, Bed, Bath, Move, Building2, Calculator } from 'lucide-react';
 import { getOptimizedImageUrl } from '../lib/imageOptimization';
 
 interface PropertyListProps {
@@ -11,12 +11,29 @@ interface PropertyListProps {
   onSelect: (property: Property) => void;
 }
 
+// Estimativa simples de parcela para exibição nos cards
+const estimateMonthlyPayment = (propertyValue: number) => {
+  const financedAmount = propertyValue * 0.80; // 80% financiado
+  const iMonthly = 0.0816 / 12; // Taxa MCMV Faixa 3
+  const term = 420; // 35 anos
+  const pmt = financedAmount * ((iMonthly * Math.pow(1 + iMonthly, term)) / (Math.pow(1 + iMonthly, term) - 1));
+  const fees = 25 + (propertyValue * 0.000138) + (financedAmount * 0.00018); // Admin + DFI + MIP médio
+  return pmt + fees;
+};
+
+const formatCurrencyShort = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+};
+
 export default function PropertyList({ category, properties, onHover, onSelect }: PropertyListProps) {
   const filteredProperties = properties.filter((p) => p.type === category);
 
   return (
     <div className="space-y-4">
-      {filteredProperties.map((property) => (
+      {filteredProperties.map((property) => {
+        const estimatedParcel = estimateMonthlyPayment(property.valor_imovel_construtora || property.price || 200000);
+        
+        return (
         <div 
           key={property.id}
           onPointerEnter={(e) => e.pointerType === 'mouse' && onHover(property.id)}
@@ -70,11 +87,17 @@ export default function PropertyList({ category, properties, onHover, onSelect }
                  <span className="text-xs md:text-sm font-black text-imperio-blue-900 leading-none">
                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(property.valor_imovel_construtora || property.price)}
                  </span>
+                 <span className="flex items-center text-[8px] md:text-[9px] font-bold text-emerald-600 mt-0.5 leading-none">
+                   <Calculator className="w-2.5 h-2.5 mr-0.5" />
+                   ~{formatCurrencyShort(estimatedParcel)}/mês*
+                 </span>
                </div>
              </div>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
+

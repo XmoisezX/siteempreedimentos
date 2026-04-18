@@ -11,7 +11,7 @@ import { getRotatedBroker } from '../lib/brokers';
 import { getOptimizedImageUrl } from '../lib/imageOptimization';
 import { generateSlug } from '../lib/slugify';
 import { analytics } from '../lib/analytics';
-import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon } from 'lucide-react';
+import { Settings, FileText, LayoutPanelLeft, Loader2, MapPin, Download, Maximize2, ExternalLink, X as CloseIcon, Calculator, ChevronLeft, Sparkles, ChevronRight, Map as MapIcon, List as ListIcon, Plus, Minus, Filter as FilterIcon, TrendingDown, ArrowRight, Shield } from 'lucide-react';
 
 export default function MainLayout() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +24,7 @@ export default function MainLayout() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSimulator, setShowSimulator] = useState(false);
+  const [showHeroSimulator, setShowHeroSimulator] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   
   // PDF Viewer State
@@ -400,12 +401,67 @@ export default function MainLayout() {
                 <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Carregando catálogo...</span>
               </div>
             ) : (
-              <PropertyList 
-                category={activeTab} 
-                properties={filteredPropertiesMap}
-                onHover={setHoveredPropertyId}
-                onSelect={(p) => navigate(p ? "/" + generateSlug(p.name) + "/" + p.id : "/")}
-              />
+              <>
+                {/* HERO BANNER - Captura atenção imediata do tráfego pago */}
+                {!showHeroSimulator ? (
+                  <div className="mb-5 bg-gradient-to-br from-imperio-blue-900 via-slate-900 to-imperio-blue-900 rounded-[24px] p-5 md:p-6 relative overflow-hidden shadow-2xl">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-imperio-gold-500/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full -ml-10 -mb-10 blur-2xl" />
+                    
+                    <div className="relative z-10">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-[0.2em]">Simulação Gratuita e Instantânea</span>
+                      </div>
+                      
+                      <h2 className="text-lg md:text-xl font-black text-white leading-tight tracking-tight mb-1">
+                        Seu Apartamento em Pelotas
+                      </h2>
+                      <p className="text-2xl md:text-3xl font-black text-imperio-gold-500 italic tracking-tighter leading-none mb-3">
+                        a partir de R$ 690/mês*
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium mb-5 leading-relaxed max-w-xs">
+                        Descubra em 30 segundos quanto vai pagar de entrada e parcela no seu financiamento pela Caixa.
+                      </p>
+                      
+                      <button 
+                        onClick={() => {
+                          analytics.simulationStart('Hero Banner - Geral');
+                          setShowHeroSimulator(true);
+                        }}
+                        className="w-full py-3.5 bg-imperio-gold-500 hover:bg-imperio-gold-600 text-white font-black text-xs uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/30 active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+                      >
+                        <Calculator className="w-4 h-4" />
+                        <span>Simular Meu Financiamento</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      
+                      <div className="flex items-center justify-center space-x-4 mt-3">
+                        <span className="flex items-center text-[8px] text-slate-500 font-bold uppercase"><Shield className="w-3 h-3 mr-1 text-emerald-500" />Dados Seguros</span>
+                        <span className="flex items-center text-[8px] text-slate-500 font-bold uppercase"><TrendingDown className="w-3 h-3 mr-1 text-blue-400" />Taxas Atualizadas</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-5">
+                    <button 
+                      onClick={() => setShowHeroSimulator(false)}
+                      className="mb-4 flex items-center space-x-2 text-slate-400 hover:text-slate-900 transition-colors font-bold text-[10px] uppercase tracking-[0.2em]"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Voltar aos Empreendimentos</span>
+                    </button>
+                    <SimulationForm />
+                  </div>
+                )}
+
+                <PropertyList 
+                  category={activeTab} 
+                  properties={filteredPropertiesMap}
+                  onHover={setHoveredPropertyId}
+                  onSelect={(p) => navigate(p ? "/" + generateSlug(p.name) + "/" + p.id : "/")}
+                />
+              </>
             )}
           </div>
         </div>
@@ -691,39 +747,38 @@ export default function MainLayout() {
                       </div>
 
                       <div className="space-y-4">
-                        {/* Ação Principal: Ver Book */}
-                        {selectedProperty.pdf_url && (
-                          <div className="relative group">
-                            <div className="absolute -inset-1 bg-gradient-to-r from-imperio-gold-500 to-amber-400 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-                            <button 
-                              onClick={() => {
-                                analytics.bookClick(selectedProperty.name);
-                                setIsLoadingPdf(true);
-                                setPdfZoom(1);
-                                setShowPdfViewer(true);
-                              }}
-                              className="relative w-full py-4 bg-gradient-to-r from-imperio-gold-500 to-amber-500 hover:from-imperio-gold-600 hover:to-amber-600 text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/20 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
-                            >
-                              <FileText className="w-5 h-5" />
-                              <span>Ver Book Completo</span>
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Ação: Simular Financiamento */}
+                        {/* Ação Principal: Simular Financiamento (PRIORIDADE #1) */}
                         <div className="relative group">
-                          <div className="absolute -inset-1 bg-gradient-to-r from-imperio-blue-900 to-slate-800 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+                          <div className="absolute -inset-1 bg-gradient-to-r from-imperio-gold-500 to-amber-400 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
                           <button 
                             onClick={() => {
                               analytics.simulationStart(selectedProperty.name);
                               setShowSimulator(true);
                             }}
-                            className="relative w-full py-4 bg-imperio-blue-900 hover:bg-black text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
+                            className="relative w-full py-4 bg-gradient-to-r from-imperio-gold-500 to-amber-500 hover:from-imperio-gold-600 hover:to-amber-600 text-white font-black text-sm uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/30 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
                           >
                             <Calculator className="w-5 h-5" />
                             <span>Simular Financiamento</span>
+                            <ArrowRight className="w-4 h-4 ml-1" />
                           </button>
+                          <p className="text-center text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-widest">Descubra sua parcela em 30 segundos</p>
                         </div>
+
+                        {/* Ação Secundária: Ver Book */}
+                        {selectedProperty.pdf_url && (
+                          <button 
+                            onClick={() => {
+                              analytics.bookClick(selectedProperty.name);
+                              setIsLoadingPdf(true);
+                              setPdfZoom(1);
+                              setShowPdfViewer(true);
+                            }}
+                            className="w-full py-3.5 bg-white hover:bg-slate-50 text-imperio-blue-900 font-black text-xs uppercase tracking-[0.15em] rounded-2xl border-2 border-imperio-blue-900/20 hover:border-imperio-blue-900/40 active:scale-[0.98] transition-all flex items-center justify-center space-x-3"
+                          >
+                            <FileText className="w-4 h-4" />
+                            <span>Ver Book Completo</span>
+                          </button>
+                        )}
                         {selectedProperty.description && (
                           <div className="mt-6 pt-6 border-t border-slate-100">
                             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Sobre o Empreendimento</h3>
@@ -773,6 +828,23 @@ export default function MainLayout() {
                          </div>
                        ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Sticky CTA Mobile - Barra fixa no rodapé do modal */}
+                {!showSimulator && !simulationData && (
+                  <div className="md:hidden sticky bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-slate-100 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-[160] animate-in slide-in-from-bottom-4 duration-500">
+                    <button 
+                      onClick={() => {
+                        analytics.simulationStart(selectedProperty.name);
+                        setShowSimulator(true);
+                      }}
+                      className="w-full py-3.5 bg-gradient-to-r from-imperio-gold-500 to-amber-500 text-white font-black text-xs uppercase tracking-[0.15em] rounded-2xl shadow-xl shadow-imperio-gold-500/30 active:scale-[0.98] transition-all flex items-center justify-center space-x-2"
+                    >
+                      <Calculator className="w-4 h-4" />
+                      <span>Simular Parcelas Agora</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>
