@@ -389,15 +389,22 @@ Gerado em: ${new Date().toLocaleString('pt-BR')}
         status: 'Aguardando Contato'
       };
 
-      supabase.from('simulations').insert([payload]).then(async ({ error }) => {
-        if (error) {
-           console.error("Erro ao salvar simulação com status:", error);
+      // Salvar lead no banco - OBRIGATÓRIO await para não perder dados se o usuário fechar a página
+      try {
+        const { error: insertError } = await supabase.from('simulations').insert([payload]);
+        if (insertError) {
+           console.error("Erro ao salvar simulação com status:", insertError);
            // Fallback temporário caso a coluna 'status' não exista no Supabase
            const fallbackPayload = { ...payload };
            delete (fallbackPayload as any).status;
-           await supabase.from('simulations').insert([fallbackPayload]);
+           const { error: fallbackError } = await supabase.from('simulations').insert([fallbackPayload]);
+           if (fallbackError) {
+             console.error("Erro no fallback ao salvar simulação:", fallbackError);
+           }
         }
-      });
+      } catch (err) {
+        console.error("Erro inesperado ao salvar lead:", err);
+      }
 
       analytics.simulationComplete(selectedProperty.name, financedAmount);
 
