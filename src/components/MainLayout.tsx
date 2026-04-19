@@ -28,6 +28,7 @@ export default function MainLayout() {
   const [showHeroSimulator, setShowHeroSimulator] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showEstimatedParcel, setShowEstimatedParcel] = useState(false);
+  const [showHeroBanner, setShowHeroBanner] = useState(true);
   const [simulationCounts, setSimulationCounts] = useState<Record<string, number>>({});
   
   // PDF Viewer State
@@ -93,7 +94,10 @@ export default function MainLayout() {
 
   useEffect(() => {
     fetchProperties();
-    getSiteSettings().then(s => setShowEstimatedParcel(s.show_estimated_parcel));
+    getSiteSettings().then(s => {
+      setShowEstimatedParcel(s.show_estimated_parcel);
+      setShowHeroBanner(s.show_hero_banner);
+    });
     // Buscar contagem de simulações por imóvel para ranking de popularidade
     supabase
       .from('simulations')
@@ -422,7 +426,7 @@ export default function MainLayout() {
             ) : (
               <>
                 {/* HERO BANNER - Captura atenção imediata do tráfego pago */}
-                {!showHeroSimulator ? (
+                {showHeroBanner && !showHeroSimulator ? (
                   <div className="mb-5 bg-gradient-to-br from-imperio-blue-900 via-slate-900 to-imperio-blue-900 rounded-[24px] p-5 md:p-6 relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 w-48 h-48 bg-imperio-gold-500/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full -ml-10 -mb-10 blur-2xl" />
@@ -461,7 +465,7 @@ export default function MainLayout() {
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) : showHeroBanner && showHeroSimulator ? (
                   <div className="mb-5">
                     <button 
                       onClick={() => setShowHeroSimulator(false)}
@@ -472,7 +476,7 @@ export default function MainLayout() {
                     </button>
                     <SimulationForm />
                   </div>
-                )}
+                ) : null}
 
                 <PropertyList 
                   category={activeTab} 

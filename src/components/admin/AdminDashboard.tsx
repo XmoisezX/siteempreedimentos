@@ -20,6 +20,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [showEstimatedParcel, setShowEstimatedParcel] = useState(false);
+  const [showHeroBanner, setShowHeroBanner] = useState(true);
   const [settingsLoading, setSettingsLoading] = useState(false);
 
   useEffect(() => {
@@ -42,7 +43,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // Load site settings
   useEffect(() => {
     if (session) {
-      getSiteSettings().then(s => setShowEstimatedParcel(s.show_estimated_parcel));
+      getSiteSettings().then(s => {
+        setShowEstimatedParcel(s.show_estimated_parcel);
+        setShowHeroBanner(s.show_hero_banner);
+      });
     }
   }, [session]);
 
@@ -310,6 +314,35 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   title={showEstimatedParcel ? 'Desativar' : 'Ativar'}
                 >
                   {showEstimatedParcel ? (
+                    <ToggleRight className="w-10 h-10 text-emerald-500" />
+                  ) : (
+                    <ToggleLeft className="w-10 h-10 text-slate-300" />
+                  )}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between py-3 border-t border-slate-100">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Mostrar banner "Seu Apartamento / Sua Casa em Pelotas"</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Exibe o banner principal com CTA de simulação no topo da listagem de imóveis.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    setSettingsLoading(true);
+                    const newValue = !showHeroBanner;
+                    const success = await updateSiteSetting('show_hero_banner', newValue);
+                    if (success) {
+                      setShowHeroBanner(newValue);
+                    } else {
+                      alert('Erro ao salvar configuração. Verifique se a tabela site_settings existe no Supabase.');
+                    }
+                    setSettingsLoading(false);
+                  }}
+                  disabled={settingsLoading}
+                  className="shrink-0 ml-4 disabled:opacity-50 transition-all"
+                  title={showHeroBanner ? 'Desativar' : 'Ativar'}
+                >
+                  {showHeroBanner ? (
                     <ToggleRight className="w-10 h-10 text-emerald-500" />
                   ) : (
                     <ToggleLeft className="w-10 h-10 text-slate-300" />
